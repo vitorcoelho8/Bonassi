@@ -47,7 +47,7 @@
 
     try {
       await window.BolaoApi.register(toPayload(registerForm));
-      setFeedback(registerFeedback, "Cadastro realizado. Voce ja pode entrar.", "success");
+      setFeedback(registerFeedback, "Cadastro realizado com sucesso.", "success");
       registerForm.reset();
     } catch (error) {
       setFeedback(registerFeedback, error.message || "Nao foi possivel cadastrar.", "error");

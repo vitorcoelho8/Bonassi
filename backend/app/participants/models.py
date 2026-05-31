@@ -8,8 +8,9 @@ class Participant(TimestampMixin, db.Model):
 
     id = db.Column(db.String(36), primary_key=True, default=lambda: str(uuid4()))
     name = db.Column(db.String(120), nullable=False)
-    email = db.Column(db.String(255), nullable=False, unique=True, index=True)
-    password_hash = db.Column(db.String(255), nullable=False)
+    phone = db.Column(db.String(30), nullable=True, unique=True, index=True)
+    email = db.Column(db.String(255), nullable=True, unique=True, index=True)
+    password_hash = db.Column(db.String(255), nullable=True)
     role = db.Column(db.String(30), nullable=False, default="participant")
     is_active = db.Column(db.Boolean, nullable=False, default=True)
 
@@ -20,6 +21,7 @@ class Participant(TimestampMixin, db.Model):
         return {
             "id": self.id,
             "name": self.name,
+            "phone": self.phone,
             "email": self.email,
             "role": self.role,
             "is_active": self.is_active,

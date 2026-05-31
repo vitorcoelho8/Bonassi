@@ -11,6 +11,9 @@ class ParticipantRepository:
     def get_by_email(self, email: str) -> Participant | None:
         return Participant.query.filter_by(email=email).first()
 
+    def get_by_phone(self, phone: str) -> Participant | None:
+        return Participant.query.filter_by(phone=phone).first()
+
     def get_by_id(self, participant_id: str) -> Participant | None:
         return db.session.get(Participant, participant_id)
 
@@ -31,13 +34,12 @@ class ParticipantService:
         return self.repository.get_by_id(participant_id)
 
     def register(self, data: dict, role: str = "participant") -> Participant:
-        if self.repository.get_by_email(data["email"]):
-            raise ValueError("Email already registered.")
+        if self.repository.get_by_phone(data["phone"]):
+            raise ValueError("Phone already registered.")
 
         participant = Participant(
             name=data["name"],
-            email=data["email"],
-            password_hash=generate_password_hash(data["password"]),
+            phone=data["phone"],
             role=role,
         )
         return self.repository.create(participant)
@@ -45,7 +47,11 @@ class ParticipantService:
     def authenticate(self, email: str, password: str) -> Participant:
         participant = self.repository.get_by_email(email)
 
-        if not participant or not check_password_hash(participant.password_hash, password):
+        if (
+            not participant
+            or not participant.password_hash
+            or not check_password_hash(participant.password_hash, password)
+        ):
             raise ValueError("Invalid credentials.")
 
         if not participant.is_active:
