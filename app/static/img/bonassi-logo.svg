@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="216" height="196" viewBox="0 0 216 196" role="img" aria-labelledby="title desc">
+  <title id="title">Bonassi Odontologia Integrada</title>
+  <desc id="desc">Marca Bonassi em tons de roxo e verde.</desc>
+  <rect width="216" height="196" rx="2" fill="#f7fafb"/>
+  <g transform="translate(68 24)" fill="none" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M28 0v84h34c24 0 42-17 42-40S86 4 62 4H28" stroke="#5d3781" stroke-width="6"/>
+    <path d="M28 43h44c17 0 31 13 31 30s-14 31-31 31H28" stroke="#4ba298" stroke-width="6"/>
+    <path d="M8 62c13-19 46-24 68-11 13 8 18 20 12 30-7 13-28 16-49 8-16-6-27-16-31-27Z" stroke="#2d6f68" stroke-width="4"/>
+  </g>
+  <text x="108" y="147" text-anchor="middle" font-family="Manrope, Segoe UI, sans-serif" font-size="38" fill="#6d3c8d">Bonassi</text>
+  <text x="108" y="166" text-anchor="middle" font-family="Hanken Grotesk, Segoe UI, sans-serif" font-size="12" fill="#8a8a8a">Odontologia Integrada</text>
+</svg>
