@@ -12,10 +12,34 @@
     <main class="app-content compact-page" aria-labelledby="admin-title">
       <section class="page-heading">
         <h1 id="admin-title">Admin</h1>
-        <p>Gerencie participantes e partidas.</p>
+        <p>Cadastre ou encontre o participante antes do atendimento.</p>
       </section>
+
       <section class="data-card">
-        <h2>Participantes</h2>
+        <h2>Novo participante</h2>
+        <form id="participant-form" class="stack-form" novalidate>
+          <label class="field">
+            <span>Nome</span>
+            <input name="name" type="text" autocomplete="name" required>
+          </label>
+          <label class="field">
+            <span>Telefone</span>
+            <input name="phone" type="tel" autocomplete="tel" inputmode="tel" required>
+          </label>
+          <p id="participant-feedback" class="form-feedback" role="status" aria-live="polite"></p>
+          <button class="primary-button" type="submit">Cadastrar participante</button>
+        </form>
+      </section>
+
+      <section class="data-card">
+        <h2>Buscar participante</h2>
+        <form id="search-form" class="stack-form search-form" novalidate>
+          <label class="field">
+            <span>Nome ou telefone</span>
+            <input id="search-term" name="term" type="search" autocomplete="off">
+          </label>
+          <button class="secondary-button" type="submit">Buscar</button>
+        </form>
         <div id="participants-list" class="data-stack"></div>
       </section>
     </main>

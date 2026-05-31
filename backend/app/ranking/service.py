@@ -11,7 +11,11 @@ class RankingService:
     def list_global(self) -> list[dict]:
         prediction_points = self._prediction_points()
         bonus_points = self._bonus_points()
-        participants = Participant.query.filter_by(is_active=True).order_by(Participant.name).all()
+        participants = (
+            Participant.query.filter_by(is_active=True, role="participant")
+            .order_by(Participant.name)
+            .all()
+        )
 
         ranking = []
         for participant in participants:
@@ -35,7 +39,7 @@ class RankingService:
                 func.count(Prediction.id).label("exact_scores"),
             )
             .join(Match)
-            .filter(Match.status == "finished")
+            .filter(func.upper(Match.status) == "FINISHED")
             .filter(Prediction.home_score == Match.home_score)
             .filter(Prediction.away_score == Match.away_score)
             .group_by(Prediction.participant_id)
@@ -53,6 +57,7 @@ class RankingService:
                 BonusAnswer.participant_id,
                 func.coalesce(func.sum(BonusAnswer.points), 0),
             )
+            .filter(func.upper(BonusAnswer.status) == "APPROVED")
             .group_by(BonusAnswer.participant_id)
             .all()
         )

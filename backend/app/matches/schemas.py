@@ -12,10 +12,10 @@ class MatchSchema:
         return {
             "home_team": str(data["home_team"]).strip(),
             "away_team": str(data["away_team"]).strip(),
-            "starts_at": self._parse_datetime(data.get("starts_at")),
+            "starts_at": self._parse_datetime(data.get("starts_at") or data.get("match_date")),
             "home_score": self._parse_optional_int(data.get("home_score")),
             "away_score": self._parse_optional_int(data.get("away_score")),
-            "status": str(data.get("status") or "scheduled").strip(),
+            "status": str(data.get("status") or "SCHEDULED").strip().upper(),
         }
 
     def dump(self, match) -> dict:

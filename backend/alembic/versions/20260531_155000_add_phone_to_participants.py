@@ -16,8 +16,6 @@ depends_on = None
 
 
 def upgrade() -> None:
-    op.add_column("participants", sa.Column("phone", sa.String(length=30), nullable=True))
-    op.create_index(op.f("ix_participants_phone"), "participants", ["phone"], unique=True)
     op.alter_column("participants", "email", existing_type=sa.String(length=255), nullable=True)
     op.alter_column("participants", "password_hash", existing_type=sa.String(length=255), nullable=True)
 
@@ -25,5 +23,3 @@ def upgrade() -> None:
 def downgrade() -> None:
     op.alter_column("participants", "password_hash", existing_type=sa.String(length=255), nullable=False)
     op.alter_column("participants", "email", existing_type=sa.String(length=255), nullable=False)
-    op.drop_index(op.f("ix_participants_phone"), table_name="participants")
-    op.drop_column("participants", "phone")

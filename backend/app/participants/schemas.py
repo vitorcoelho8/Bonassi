@@ -12,7 +12,12 @@ class ParticipantSchema:
         }
 
     def dump(self, participant) -> dict:
-        return participant.to_dict()
+        return {
+            "id": participant.id,
+            "name": participant.name,
+            "phone": participant.phone,
+            "is_active": participant.is_active,
+        }
 
     def dump_many(self, participants) -> list[dict]:
         return [self.dump(participant) for participant in participants]

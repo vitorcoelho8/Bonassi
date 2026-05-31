@@ -53,11 +53,43 @@ def admin_required(view: Callable[..., Any]) -> Callable[..., Any]:
     return wrapper
 
 
+@participants_bp.get("")
 @participants_bp.get("/")
-@login_required
 def list_participants():
     participants = ParticipantService().list_active()
     return jsonify({"items": ParticipantSchema().dump_many(participants)})
+
+
+@participants_bp.get("/search")
+def search_participants():
+    term = request.args.get("term", "")
+    participants = ParticipantService().search(term)
+    return jsonify({"items": ParticipantSchema().dump_many(participants)})
+
+
+@participants_bp.get("/<participant_id>")
+def get_participant(participant_id: str):
+    participant = ParticipantService().get_by_id(participant_id)
+
+    if participant is None or not participant.is_active or participant.role != "participant":
+        return jsonify({"error": "Participante nao encontrado."}), 404
+
+    return jsonify({"item": ParticipantSchema().dump(participant)})
+
+
+@participants_bp.post("")
+@participants_bp.post("/")
+def create_participant():
+    try:
+        payload = ParticipantSchema().load(request.get_json(silent=True) or {})
+        participant = ParticipantService().register(payload)
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify({"error": "Banco de dados indisponivel."}), 503
+
+    return jsonify({"item": ParticipantSchema().dump(participant)}), 201
 
 
 @participants_bp.post("/register")
@@ -65,10 +97,13 @@ def register():
     try:
         payload = ParticipantSchema().load(request.get_json(silent=True) or {})
         participant = ParticipantService().register(payload)
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify({"error": "Banco de dados indisponivel."}), 503
     except ValueError as error:
         return jsonify({"error": str(error)}), 400
 
-    return jsonify({"user": ParticipantSchema().dump(participant)}), 201
+    return jsonify({"user": ParticipantSchema().dump(participant), "item": ParticipantSchema().dump(participant)}), 201
 
 
 @participants_bp.post("/login")

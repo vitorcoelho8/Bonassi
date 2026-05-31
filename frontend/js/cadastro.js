@@ -35,6 +35,7 @@
 
   const registerForm = document.querySelector("#register-form");
   const registerFeedback = document.querySelector("#register-feedback");
+  const visitProfileLink = document.querySelector("#visit-profile-link");
 
   registerForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -46,9 +47,14 @@
     setFeedback(registerFeedback, "Salvando cadastro...", "");
 
     try {
-      await window.BolaoApi.register(toPayload(registerForm));
+      const data = await window.BolaoApi.createParticipant(toPayload(registerForm));
+      const participant = data.item;
       setFeedback(registerFeedback, "Cadastro realizado com sucesso.", "success");
       registerForm.reset();
+      if (visitProfileLink && participant?.id) {
+        visitProfileLink.href = `palpites.html?participant_id=${encodeURIComponent(participant.id)}`;
+        visitProfileLink.classList.remove("hidden");
+      }
     } catch (error) {
       setFeedback(registerFeedback, error.message || "Nao foi possivel cadastrar.", "error");
     }

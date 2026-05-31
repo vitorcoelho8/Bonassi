@@ -2,25 +2,37 @@ from flask import Blueprint, g, jsonify, request
 
 from app.bonus.schemas import BonusAnswerSchema
 from app.bonus.service import BonusService
-from app.participants.routes import login_required
 
 bonus_bp = Blueprint("bonus", __name__)
 
 
+@bonus_bp.get("")
 @bonus_bp.get("/")
-@login_required
 def list_bonus_answers():
-    answers = BonusService().list_by_participant(g.current_user.id)
+    participant_id = request.args.get("participant_id") or getattr(g, "current_user", None)
+    if hasattr(participant_id, "id"):
+        participant_id = participant_id.id
+
+    if not participant_id:
+        return jsonify({"error": "participant_id e obrigatorio."}), 400
+
+    answers = BonusService().list_by_participant(participant_id)
     return jsonify({"items": BonusAnswerSchema().dump_many(answers)})
 
 
+@bonus_bp.get("/participant/<participant_id>")
+def list_bonus_answers_by_participant(participant_id: str):
+    answers = BonusService().list_by_participant(participant_id)
+    return jsonify({"items": BonusAnswerSchema().dump_many(answers)})
+
+
+@bonus_bp.post("")
 @bonus_bp.post("/")
-@login_required
 def save_bonus_answer():
     try:
         payload = BonusAnswerSchema().load(request.get_json(silent=True) or {})
-        answer = BonusService().upsert(g.current_user.id, payload)
+        answer = BonusService().upsert(payload)
     except ValueError as error:
         return jsonify({"error": str(error)}), 400
 
-    return jsonify({"item": BonusAnswerSchema().dump(answer)}), 200
+    return jsonify({"item": BonusAnswerSchema().dump(answer)}), 201

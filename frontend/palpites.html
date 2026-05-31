@@ -12,9 +12,32 @@
     <main class="app-content compact-page" aria-labelledby="predictions-title">
       <section class="page-heading">
         <h1 id="predictions-title">Palpites</h1>
-        <p>Envie seus placares antes dos jogos.</p>
+        <p id="participant-heading">Carregando participante...</p>
       </section>
-      <section id="matches-list" class="data-stack"></section>
+      <section id="profile-panel" class="data-card hidden"></section>
+      <section id="prediction-panel" class="data-card hidden">
+        <h2>Proximo jogo</h2>
+        <div id="next-match" class="match-summary"></div>
+        <form id="prediction-form" class="stack-form" novalidate>
+          <input id="match-id" name="match_id" type="hidden">
+          <div class="split-fields">
+            <label class="field">
+              <span>Placar mandante</span>
+              <input name="predicted_home_score" type="number" min="0" inputmode="numeric" required>
+            </label>
+            <label class="field">
+              <span>Placar visitante</span>
+              <input name="predicted_away_score" type="number" min="0" inputmode="numeric" required>
+            </label>
+          </div>
+          <p id="prediction-feedback" class="form-feedback" role="status" aria-live="polite"></p>
+          <button class="primary-button" type="submit">Salvar palpite</button>
+        </form>
+      </section>
+      <section class="screen-actions">
+        <button id="bonus-button" class="secondary-button" type="button">Solicitar bonus</button>
+        <button id="finish-button" class="secondary-button" type="button">Finalizar atendimento</button>
+      </section>
     </main>
   </body>
 </html>

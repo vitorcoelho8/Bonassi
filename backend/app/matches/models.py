@@ -18,13 +18,15 @@ class Match(TimestampMixin, db.Model):
     predictions = db.relationship("Prediction", back_populates="match", lazy=True)
 
     def to_dict(self) -> dict:
+        starts_at = self.starts_at.isoformat() if self.starts_at else None
         return {
             "id": self.id,
             "home_team": self.home_team,
             "away_team": self.away_team,
-            "starts_at": self.starts_at.isoformat() if self.starts_at else None,
+            "starts_at": starts_at,
+            "match_date": starts_at,
             "home_score": self.home_score,
             "away_score": self.away_score,
-            "status": self.status,
+            "status": self.status.upper() if self.status else self.status,
             "is_active": self.is_active,
         }

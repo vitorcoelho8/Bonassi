@@ -12,16 +12,39 @@
     <main class="app-content compact-page" aria-labelledby="bonus-title">
       <section class="page-heading">
         <h1 id="bonus-title">Bonus</h1>
-        <p>Responda palpites especiais para somar pontos extras.</p>
+        <p id="bonus-participant-heading">Carregando participante...</p>
       </section>
       <form id="bonus-form" class="data-card stack-form">
         <label class="field">
-          <span>Campeao</span>
-          <input name="answer" type="text" required>
+          <span>Tipo de bonus</span>
+          <select id="bonus-type" name="bonus_type" required>
+            <option value="FOLLOW_BONASSI">Seguir a Bonassi: +4 pontos</option>
+            <option value="STORY_MENTION">Story marcando a clinica: +4 pontos</option>
+            <option value="INSTAGRAM_REVIEW">Avaliar/interagir com a Bonassi no Instagram: +2 pontos</option>
+            <option value="REFERRAL">Indicar alguem: +6 pontos</option>
+          </select>
         </label>
+        <label class="field">
+          <span>Observacao</span>
+          <textarea name="evidence_text" rows="3" required></textarea>
+        </label>
+        <div id="referral-fields" class="split-fields hidden">
+          <label class="field">
+            <span>Nome do indicado</span>
+            <input name="referral_name" type="text" autocomplete="off">
+          </label>
+          <label class="field">
+            <span>Telefone do indicado</span>
+            <input name="referral_phone" type="tel" autocomplete="off" inputmode="tel">
+          </label>
+        </div>
         <p id="bonus-feedback" class="form-feedback" role="status" aria-live="polite"></p>
-        <button class="primary-button" type="submit">Salvar bonus</button>
+        <button class="primary-button" type="submit">Enviar solicitacao</button>
+        <button id="back-profile-button" class="secondary-button" type="button">Voltar para perfil</button>
       </form>
+      <section class="screen-actions">
+        <button id="finish-button" class="secondary-button" type="button">Finalizar atendimento</button>
+      </section>
     </main>
   </body>
 </html>

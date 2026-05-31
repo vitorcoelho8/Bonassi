@@ -1,5 +1,14 @@
 from app.bonus.models import BonusAnswer
 from app.database import db
+from app.participants.models import Participant
+
+
+BONUS_POINTS = {
+    "FOLLOW_BONASSI": 4,
+    "STORY_MENTION": 4,
+    "INSTAGRAM_REVIEW": 2,
+    "REFERRAL": 6,
+}
 
 
 class BonusRepository:
@@ -25,11 +34,21 @@ class BonusService:
     def list_by_participant(self, participant_id: str) -> list[BonusAnswer]:
         return self.repository.list_by_participant(participant_id)
 
-    def upsert(self, participant_id: str, data: dict) -> BonusAnswer:
-        answer = self.repository.get_answer(participant_id, data["question_key"])
+    def upsert(self, data: dict) -> BonusAnswer:
+        participant = db.session.get(Participant, data["participant_id"])
+        if participant is None or not participant.is_active or participant.role != "participant":
+            raise ValueError("Participante nao encontrado.")
+
+        answer = self.repository.get_answer(participant.id, data["question_key"])
 
         if answer is None:
-            answer = BonusAnswer(participant_id=participant_id, question_key=data["question_key"])
+            answer = BonusAnswer(participant_id=participant.id, question_key=data["question_key"])
 
+        answer.bonus_type = data["bonus_type"]
+        answer.evidence_text = data["evidence_text"]
+        answer.referral_name = data["referral_name"]
+        answer.referral_phone = data["referral_phone"]
+        answer.status = "PENDING"
+        answer.points = BONUS_POINTS[data["bonus_type"]]
         answer.answer = data["answer"]
         return self.repository.save(answer)

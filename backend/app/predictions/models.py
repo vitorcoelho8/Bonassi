@@ -14,6 +14,7 @@ class Prediction(TimestampMixin, db.Model):
     match_id = db.Column(db.String(36), db.ForeignKey("matches.id"), nullable=False)
     home_score = db.Column(db.Integer, nullable=False)
     away_score = db.Column(db.Integer, nullable=False)
+    points = db.Column(db.Integer, nullable=False, default=0)
 
     participant = db.relationship("Participant", back_populates="predictions")
     match = db.relationship("Match", back_populates="predictions")
@@ -25,4 +26,7 @@ class Prediction(TimestampMixin, db.Model):
             "match_id": self.match_id,
             "home_score": self.home_score,
             "away_score": self.away_score,
+            "predicted_home_score": self.home_score,
+            "predicted_away_score": self.away_score,
+            "points": self.points,
         }
