@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Bolao Hexa 2026 - Bonus</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/api.js" defer></script>
+    <script src="js/bonus.js" defer></script>
+  </head>
+  <body class="app-page">
+    <main class="app-content compact-page" aria-labelledby="bonus-title">
+      <section class="page-heading">
+        <h1 id="bonus-title">Bonus</h1>
+        <p>Responda palpites especiais para somar pontos extras.</p>
+      </section>
+      <form id="bonus-form" class="data-card stack-form">
+        <label class="field">
+          <span>Campeao</span>
+          <input name="answer" type="text" required>
+        </label>
+        <p id="bonus-feedback" class="form-feedback" role="status" aria-live="polite"></p>
+        <button class="primary-button" type="submit">Salvar bonus</button>
+      </form>
+    </main>
+  </body>
+</html>
