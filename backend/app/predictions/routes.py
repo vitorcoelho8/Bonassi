@@ -1,5 +1,7 @@
 from flask import Blueprint, g, jsonify, request
+from sqlalchemy.exc import SQLAlchemyError
 
+from app.database import db
 from app.predictions.schemas import PredictionSchema
 from app.predictions.service import PredictionService
 
@@ -34,6 +36,9 @@ def save_prediction():
         prediction = PredictionService().create(payload)
     except ValueError as error:
         return jsonify({"error": str(error)}), 400
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify({"error": "Banco de dados indisponivel."}), 503
 
     return jsonify({"item": PredictionSchema().dump(prediction)}), 201
 
@@ -45,5 +50,8 @@ def update_prediction(prediction_id: str):
         prediction = PredictionService().update(prediction_id, payload)
     except ValueError as error:
         return jsonify({"error": str(error)}), 400
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify({"error": "Banco de dados indisponivel."}), 503
 
     return jsonify({"item": PredictionSchema().dump(prediction)}), 200

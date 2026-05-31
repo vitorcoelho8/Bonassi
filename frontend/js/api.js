@@ -31,17 +31,16 @@
       method: "POST",
       body: JSON.stringify(payload),
     }),
-    register: (payload) => request("/api/participants/register", {
-      method: "POST",
-      body: JSON.stringify(payload),
-    }),
-    createParticipant: (payload) => request("/api/participants", {
+    createUser: (payload) => request("/api/users", {
       method: "POST",
       body: JSON.stringify(payload),
     }),
     participants: () => request("/api/participants"),
     participant: (id) => request(`/api/participants/${encodeURIComponent(id)}`),
     searchParticipants: (term) => request(`/api/participants/search?term=${encodeURIComponent(term)}`),
+    users: () => request("/api/users"),
+    user: (id) => request(`/api/users/${encodeURIComponent(id)}`),
+    searchUsers: (term) => request(`/api/users/search?term=${encodeURIComponent(term)}`),
     ranking: () => request("/api/ranking/"),
     matches: () => request("/api/matches/"),
     nextMatch: () => request("/api/matches/next"),

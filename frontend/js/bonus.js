@@ -40,7 +40,7 @@
   });
 
   finishButton.addEventListener("click", () => {
-    window.location.href = "admin.html";
+    window.location.href = "usuarios.html";
   });
 
   bonusType.addEventListener("change", toggleReferralFields);

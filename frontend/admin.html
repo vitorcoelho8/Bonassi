@@ -3,44 +3,19 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <title>Bolao Hexa 2026 - Admin</title>
+    <meta http-equiv="refresh" content="0; url=usuarios.html">
+    <title>Bolao Hexa 2026 - Redirecionando</title>
     <link rel="stylesheet" href="css/style.css">
-    <script src="js/api.js" defer></script>
-    <script src="js/admin.js" defer></script>
+    <script>
+      window.location.replace("usuarios.html");
+    </script>
   </head>
   <body class="app-page">
-    <main class="app-content compact-page" aria-labelledby="admin-title">
+    <main class="app-content compact-page">
       <section class="page-heading">
-        <h1 id="admin-title">Admin</h1>
-        <p>Cadastre ou encontre o participante antes do atendimento.</p>
-      </section>
-
-      <section class="data-card">
-        <h2>Novo participante</h2>
-        <form id="participant-form" class="stack-form" novalidate>
-          <label class="field">
-            <span>Nome</span>
-            <input name="name" type="text" autocomplete="name" required>
-          </label>
-          <label class="field">
-            <span>Telefone</span>
-            <input name="phone" type="tel" autocomplete="tel" inputmode="tel" required>
-          </label>
-          <p id="participant-feedback" class="form-feedback" role="status" aria-live="polite"></p>
-          <button class="primary-button" type="submit">Cadastrar participante</button>
-        </form>
-      </section>
-
-      <section class="data-card">
-        <h2>Buscar participante</h2>
-        <form id="search-form" class="stack-form search-form" novalidate>
-          <label class="field">
-            <span>Nome ou telefone</span>
-            <input id="search-term" name="term" type="search" autocomplete="off">
-          </label>
-          <button class="secondary-button" type="submit">Buscar</button>
-        </form>
-        <div id="participants-list" class="data-stack"></div>
+        <h1>Redirecionando</h1>
+        <p>O painel de usuarios agora fica em usuarios.html.</p>
+        <a class="primary-button" href="usuarios.html">Abrir usuarios</a>
       </section>
     </main>
   </body>

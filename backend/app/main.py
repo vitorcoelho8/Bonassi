@@ -30,6 +30,7 @@ def create_app(config_class: type[Config] = Config) -> Flask:
 
 def register_blueprints(app: Flask) -> None:
     app.register_blueprint(participants_bp, url_prefix="/api/participants")
+    app.register_blueprint(participants_bp, url_prefix="/api/users", name="users")
     app.register_blueprint(participants_bp, url_prefix="/api/auth", name="auth")
     app.register_blueprint(matches_bp, url_prefix="/api/matches")
     app.register_blueprint(predictions_bp, url_prefix="/api/predictions")
@@ -59,6 +60,10 @@ def register_frontend_routes(app: Flask) -> None:
     @app.get("/login")
     def login_page():
         return send_from_directory(frontend_dir, "index.html")
+
+    @app.get("/matches")
+    def matches_page():
+        return send_from_directory(frontend_dir, "matches.html")
 
     @app.get("/<path:filename>")
     def frontend_page(filename: str):

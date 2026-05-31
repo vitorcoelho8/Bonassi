@@ -55,7 +55,7 @@
   });
 
   finishButton.addEventListener("click", () => {
-    window.location.href = "admin.html";
+    window.location.href = "usuarios.html";
   });
 
   predictionForm?.addEventListener("submit", async (event) => {

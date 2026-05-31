@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Bolao Hexa 2026 - Usuarios</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=Manrope:wght@500;600;700&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/api.js" defer></script>
+    <script src="js/usuarios.js" defer></script>
+  </head>
+  <body class="app-page">
+    <header class="app-topbar">
+      <div class="brand-lockup">
+        <img class="profile-avatar" src="img/bonassi-logo.svg" alt="Bonassi">
+        <h1>Usuarios</h1>
+      </div>
+      <a class="score-pill" href="ranking.html">Home</a>
+    </header>
+
+    <main class="app-content users-page" aria-labelledby="users-title">
+      <section class="users-hero">
+        <div>
+          <h2 id="users-title">Gestao de Usuarios</h2>
+          <p>Lista de participantes cadastrados para atendimento.</p>
+        </div>
+        <button id="add-user-button" class="primary-button add-user-button" type="button">
+          <span class="material-symbols-outlined" aria-hidden="true">add</span>
+          <span>Adicionar Usuario</span>
+        </button>
+      </section>
+
+      <section id="user-form-panel" class="data-card users-form-panel hidden">
+        <div class="section-toolbar">
+          <div>
+            <h2>Adicionar novo usuario</h2>
+            <p>Use apenas nome e telefone do participante.</p>
+          </div>
+        </div>
+        <form id="user-form" class="stack-form" novalidate>
+          <label class="field">
+            <span>Nome</span>
+            <input name="name" type="text" autocomplete="name" required>
+          </label>
+          <label class="field">
+            <span>Telefone</span>
+            <input name="phone" type="tel" autocomplete="tel" inputmode="tel" required>
+          </label>
+          <p id="user-feedback" class="form-feedback" role="status" aria-live="polite"></p>
+          <button class="primary-button" type="submit">Cadastrar usuario</button>
+        </form>
+      </section>
+
+      <section class="users-directory">
+        <div class="section-toolbar">
+          <div>
+            <h2>Lista de Usuarios</h2>
+            <p>Gerencie acessos de forma rapida e compacta.</p>
+          </div>
+        </div>
+        <form id="user-search-form" class="stack-form search-form" novalidate>
+          <label class="field">
+            <span>Nome ou telefone</span>
+            <input id="user-search-term" name="term" type="search" autocomplete="off">
+          </label>
+          <button class="secondary-button" type="submit">Buscar</button>
+        </form>
+        <div id="users-list" class="users-list"></div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navegacao principal">
+      <a href="/matches" class="nav-item">
+        <span class="material-symbols-outlined nav-icon" aria-hidden="true">sports_soccer</span>
+        <span>Jogos</span>
+      </a>
+      <a href="ranking.html" class="nav-item">
+        <span class="material-symbols-outlined nav-icon" aria-hidden="true">leaderboard</span>
+        <span>Ranking</span>
+      </a>
+      <a href="bonus.html" class="nav-item">
+        <span class="material-symbols-outlined nav-icon" aria-hidden="true">workspace_premium</span>
+        <span>Bonus</span>
+      </a>
+      <a href="usuarios.html" class="nav-item active" aria-current="page">
+        <span class="material-symbols-outlined nav-icon filled" aria-hidden="true">group</span>
+        <span>Usuarios</span>
+      </a>
+    </nav>
+  </body>
+</html>
