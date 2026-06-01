@@ -12,6 +12,11 @@
   const homeScoreInput = document.querySelector("#result-home-score");
   const awayScoreInput = document.querySelector("#result-away-score");
 
+  const reopenMatchModal = document.querySelector("#reopen-match-modal");
+  const reopenMatchForm = document.querySelector("#reopen-match-form");
+  const reopenMatchFeedback = document.querySelector("#reopen-match-feedback");
+  const reopenMatchTitle = document.querySelector("#reopen-match-title");
+
   const nextMatchModal = document.querySelector("#next-match-modal");
   const nextMatchForm = document.querySelector("#next-match-form");
   const nextMatchPhase = document.querySelector("#next-match-phase");
@@ -31,6 +36,7 @@
   ];
 
   let currentMatch = null;
+  let currentReopenMatch = null;
   let phaseOptions = [];
   let allMatches = [];
   let selectedPhase = "GROUP_STAGE";
@@ -89,8 +95,10 @@
     && match.away_score !== null
     && match.away_score !== undefined;
 
+  const isFinished = (match) => String(match.status || "").toUpperCase() === "FINISHED";
+
   const formatMatchTitle = (match) => {
-    if (!hasResult(match)) {
+    if (!isFinished(match) || !hasResult(match)) {
       return `${match.home_team} x ${match.away_team}`;
     }
 
@@ -162,6 +170,12 @@
     resultFeedback.classList.toggle("is-success", type === "success");
   };
 
+  const setReopenMatchFeedback = (message, type = "") => {
+    reopenMatchFeedback.textContent = message;
+    reopenMatchFeedback.classList.toggle("is-error", type === "error");
+    reopenMatchFeedback.classList.toggle("is-success", type === "success");
+  };
+
   const setNextMatchFeedback = (message, type = "") => {
     nextMatchFeedback.textContent = message;
     nextMatchFeedback.classList.toggle("is-error", type === "error");
@@ -192,6 +206,20 @@
     setResultFeedback("");
   };
 
+  const openReopenMatchModal = (match) => {
+    currentReopenMatch = match;
+    reopenMatchTitle.textContent = formatMatchTitle(match);
+    setReopenMatchFeedback("");
+    reopenMatchModal.showModal();
+  };
+
+  const closeReopenMatchModal = () => {
+    reopenMatchModal.close();
+    currentReopenMatch = null;
+    reopenMatchForm.reset();
+    setReopenMatchFeedback("");
+  };
+
   const renderMatches = () => {
     const matches = getFilteredMatches();
     if (!matches.length) {
@@ -203,6 +231,14 @@
       const dateParts = formatDate(match.match_date || match.starts_at);
       const matchTitle = formatMatchTitle(match);
       const phaseLabel = match.phase_label || match.phase || "Fase nao informada";
+      const reopenButton = isFinished(match)
+        ? `
+          <button class="danger-button result-button reopen-match-button" type="button" data-reopen-match-id="${escapeHtml(match.id)}">
+            <span class="material-symbols-outlined" aria-hidden="true">restart_alt</span>
+            <span>Reabrir</span>
+          </button>
+        `
+        : "";
 
       return `
         <article class="match-row">
@@ -215,10 +251,13 @@
             ${dateParts.time ? `<span>${escapeHtml(dateParts.time)}</span>` : ""}
           </time>
           <span class="status-chip">${escapeHtml(formatStatus(match.status))}</span>
-          <button class="secondary-button result-button" type="button" data-match-id="${escapeHtml(match.id)}">
-            <span class="material-symbols-outlined" aria-hidden="true">scoreboard</span>
-            <span>Resultado</span>
-          </button>
+          <div class="match-actions">
+            <button class="secondary-button result-button" type="button" data-match-id="${escapeHtml(match.id)}">
+              <span class="material-symbols-outlined" aria-hidden="true">scoreboard</span>
+              <span>Resultado</span>
+            </button>
+            ${reopenButton}
+          </div>
         </article>
       `;
     }).join("");
@@ -228,6 +267,15 @@
         const match = matches.find((item) => item.id === button.dataset.matchId);
         if (match) {
           openResultModal(match);
+        }
+      });
+    });
+
+    matchesList.querySelectorAll("[data-reopen-match-id]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const match = matches.find((item) => item.id === button.dataset.reopenMatchId);
+        if (match) {
+          openReopenMatchModal(match);
         }
       });
     });
@@ -260,8 +308,6 @@
     `;
   };
 
-  const getSelectedBrazilSide = () => new FormData(nextMatchForm).get("brazil_side") || "";
-
   const buildStartsAt = () => {
     if (!nextMatchDate.value || !nextMatchTime.value) {
       return "";
@@ -274,8 +320,7 @@
     const selectedPhase = phaseOptions.find((phase) => phase.value === nextMatchPhase.value);
     const phaseLabel = selectedPhase?.label || "Fase nao selecionada";
     const opponent = nextMatchOpponent.value.trim() || "Adversario";
-    const brazilSide = getSelectedBrazilSide();
-    const title = brazilSide === "AWAY" ? `${opponent} x Brasil` : `Brasil x ${opponent}`;
+    const title = `Brasil x ${opponent}`;
     const startsAt = buildStartsAt();
     const dateParts = startsAt ? formatDate(startsAt) : { date: "Data nao informada", time: "" };
 
@@ -325,17 +370,10 @@
       return null;
     }
 
-    const brazilSide = getSelectedBrazilSide();
-    if (!brazilSide) {
-      setNextMatchFeedback("Escolha se o Brasil sera mandante ou visitante.", "error");
-      return null;
-    }
-
     return {
       phase: nextMatchPhase.value,
       opponent_team: opponentTeam,
       starts_at: startsAt,
-      brazil_side: brazilSide,
     };
   };
 
@@ -368,6 +406,25 @@
     }
   });
 
+  reopenMatchForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (!currentReopenMatch) {
+      return;
+    }
+
+    setReopenMatchFeedback("Reabrindo partida...");
+
+    try {
+      const data = await window.BolaoApi.reopenMatch(currentReopenMatch.id);
+      closeReopenMatchModal();
+      setPageFeedback(data.message || "Partida reaberta com sucesso.", "success");
+      await loadMatches();
+    } catch (error) {
+      setReopenMatchFeedback(error.message || "Nao foi possivel reabrir a partida.", "error");
+    }
+  });
+
   nextMatchForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
 
@@ -395,6 +452,12 @@
     setResultFeedback("");
   });
 
+  reopenMatchModal?.addEventListener("cancel", () => {
+    currentReopenMatch = null;
+    reopenMatchForm.reset();
+    setReopenMatchFeedback("");
+  });
+
   nextMatchModal?.addEventListener("cancel", () => {
     nextMatchForm.reset();
     setNextMatchFeedback("");
@@ -405,6 +468,10 @@
     button.addEventListener("click", closeResultModal);
   });
 
+  document.querySelectorAll("[data-close-reopen-match]").forEach((button) => {
+    button.addEventListener("click", closeReopenMatchModal);
+  });
+
   document.querySelectorAll("[data-close-next-match]").forEach((button) => {
     button.addEventListener("click", closeNextMatchModal);
   });
@@ -413,9 +480,6 @@
   [nextMatchPhase, nextMatchOpponent, nextMatchDate, nextMatchTime].forEach((element) => {
     element?.addEventListener("input", updateNextMatchPreview);
     element?.addEventListener("change", updateNextMatchPreview);
-  });
-  nextMatchForm?.querySelectorAll("input[name='brazil_side']").forEach((input) => {
-    input.addEventListener("change", updateNextMatchPreview);
   });
 
   loadMatches();

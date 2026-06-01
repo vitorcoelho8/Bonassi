@@ -268,7 +268,8 @@ a {
 }
 
 .primary-button,
-.secondary-button {
+.secondary-button,
+.danger-button {
   display: inline-flex;
   min-height: 52px;
   align-items: center;
@@ -290,6 +291,12 @@ a {
   border: 1px solid var(--surface-variant);
   color: var(--primary);
   background: var(--surface);
+}
+
+.danger-button {
+  border: 1px solid rgba(186, 26, 26, 0.28);
+  color: #ffffff;
+  background: var(--danger);
 }
 
 .hidden {
@@ -478,7 +485,7 @@ a {
 .matches-header,
 .match-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(108px, 144px) minmax(92px, 128px) 104px 126px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(108px, 144px) minmax(92px, 128px) 104px minmax(210px, 224px);
   gap: 10px;
   align-items: center;
   padding: 12px 14px;
@@ -529,6 +536,13 @@ a {
   line-height: 1.25;
 }
 
+.match-actions {
+  display: flex;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .result-button {
   min-height: 40px;
   gap: 6px;
@@ -539,6 +553,19 @@ a {
 
 .result-button .material-symbols-outlined {
   font-size: 1.15rem;
+}
+
+.reopen-match-button {
+  border-color: rgba(186, 26, 26, 0.18);
+  color: #7d1717;
+  background: #fde8e8;
+}
+
+.reopen-match-button:hover,
+.reopen-match-button:focus {
+  border-color: rgba(186, 26, 26, 0.34);
+  background: #fbd7d7;
+  box-shadow: 0 0 0 3px rgba(186, 26, 26, 0.1);
 }
 
 .result-modal {
@@ -620,17 +647,18 @@ a {
   gap: 10px;
 }
 
-.next-match-side {
+.reopen-warning {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
+  gap: 10px;
+  color: var(--text-muted);
 }
 
-.next-match-side legend {
-  grid-column: 1 / -1;
+.reopen-warning strong {
+  color: var(--text);
+  font-family: var(--font-headline);
 }
 
-.next-match-side .check-option {
+.reopen-warning p {
   margin: 0;
 }
 
@@ -1194,8 +1222,12 @@ a {
     align-items: center;
   }
 
-  .match-row .result-button {
+  .match-row .match-actions {
     grid-area: action;
+    justify-self: end;
+  }
+
+  .match-row .result-button {
     width: 42px;
     min-width: 42px;
     height: 42px;
@@ -1217,10 +1249,6 @@ a {
   .phase-filter-button {
     flex: 1 1 calc(50% - 8px);
     padding: 0 12px;
-  }
-
-  .next-match-side {
-    grid-template-columns: 1fr;
   }
 
   .result-scoreline {

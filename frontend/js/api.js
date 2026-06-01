@@ -68,6 +68,9 @@
       method: "PUT",
       body: JSON.stringify(payload),
     }),
+    reopenMatch: (matchId) => request(`/api/admin/matches/${encodeURIComponent(matchId)}/reopen`, {
+      method: "PATCH",
+    }),
     predictions: () => request("/api/predictions/"),
     participantPredictions: (participantId) => request(`/api/predictions/participant/${encodeURIComponent(participantId)}`),
     savePrediction: (payload) => request("/api/predictions/", {

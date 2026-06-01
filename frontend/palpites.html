@@ -30,16 +30,17 @@
       <section id="prediction-panel" class="data-card hidden">
         <h2>Proximo jogo</h2>
         <div id="next-match" class="match-summary"></div>
+        <section id="saved-prediction" class="match-summary hidden" aria-live="polite"></section>
         <form id="prediction-form" class="stack-form" novalidate>
           <input id="match-id" name="match_id" type="hidden">
           <div class="split-fields">
             <label class="field">
-              <span>Placar mandante</span>
-              <input name="predicted_home_score" type="number" min="0" inputmode="numeric" required>
+              <span>Placar do Brasil</span>
+              <input id="brazil-score" name="brazil_score" type="number" min="0" inputmode="numeric" required>
             </label>
             <label class="field">
-              <span>Placar visitante</span>
-              <input name="predicted_away_score" type="number" min="0" inputmode="numeric" required>
+              <span>Placar do advers&aacute;rio</span>
+              <input id="opponent-score" name="opponent_score" type="number" min="0" inputmode="numeric" required>
             </label>
           </div>
           <p id="prediction-feedback" class="form-feedback" role="status" aria-live="polite"></p>

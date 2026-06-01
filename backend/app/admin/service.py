@@ -76,7 +76,6 @@ class AdminService:
         phase = self._parse_next_match_phase(data)
         opponent_team = self._parse_opponent_team(data)
         starts_at = self._parse_starts_at(data)
-        brazil_side = self._parse_brazil_side(data)
 
         if self._has_brazil_match_for_phase(phase):
             raise ValueError("Ja existe uma partida do Brasil cadastrada para esta fase.")
@@ -84,16 +83,9 @@ class AdminService:
         if self._has_future_scheduled_brazil_match():
             raise ValueError("Ja existe uma partida futura do Brasil disponivel para palpites.")
 
-        if brazil_side == "HOME":
-            home_team = "Brasil"
-            away_team = opponent_team
-        else:
-            home_team = opponent_team
-            away_team = "Brasil"
-
         match = Match(
-            home_team=home_team,
-            away_team=away_team,
+            home_team="Brasil",
+            away_team=opponent_team,
             starts_at=starts_at,
             home_score=None,
             away_score=None,
@@ -132,6 +124,23 @@ class AdminService:
 
         db.session.commit()
         return match, len(predictions)
+
+    def reopen_match(self, match_id: str) -> tuple[Match, bool]:
+        match = db.session.get(Match, match_id)
+        if match is None:
+            raise ValueError("Partida nao encontrada.")
+
+        is_finished = str(match.status or "").upper() == "FINISHED"
+        if not is_finished:
+            return match, False
+
+        match.status = "SCHEDULED"
+
+        db.session.commit()
+        return match, True
+
+    def reset_match_result(self, match_id: str) -> tuple[Match, bool]:
+        return self.reopen_match(match_id)
 
     def _parse_score(self, data: dict, field: str) -> int:
         if field not in data or data[field] in (None, ""):
@@ -192,16 +201,6 @@ class AdminService:
             raise ValueError("starts_at deve representar uma data futura.")
 
         return starts_at
-
-    def _parse_brazil_side(self, data: dict) -> str:
-        if not data.get("brazil_side"):
-            raise ValueError("brazil_side e obrigatorio.")
-
-        brazil_side = str(data["brazil_side"]).strip().upper()
-        if brazil_side not in {"HOME", "AWAY"}:
-            raise ValueError("brazil_side deve ser HOME ou AWAY.")
-
-        return brazil_side
 
     def _has_brazil_match_for_phase(self, phase: str) -> bool:
         return (

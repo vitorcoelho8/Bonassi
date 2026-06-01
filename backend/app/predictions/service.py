@@ -78,8 +78,9 @@ class PredictionService:
             match_id=match.id,
             points=0,
         )
-        prediction.home_score = data["home_score"]
-        prediction.away_score = data["away_score"]
+        scores = self._scores_for_match(match, data)
+        prediction.home_score = scores["home_score"]
+        prediction.away_score = scores["away_score"]
 
         return self.repository.save(prediction)
 
@@ -94,8 +95,9 @@ class PredictionService:
         match = self._get_valid_match(prediction.match_id)
         self._ensure_match_is_open(match)
 
-        prediction.home_score = data["home_score"]
-        prediction.away_score = data["away_score"]
+        scores = self._scores_for_match(match, data)
+        prediction.home_score = scores["home_score"]
+        prediction.away_score = scores["away_score"]
         return self.repository.save(prediction)
 
     def _get_valid_participant(self, participant_id: str) -> Participant:
@@ -123,3 +125,32 @@ class PredictionService:
 
         if starts_at <= now:
             raise ValueError("O prazo para palpitar neste jogo ja terminou.")
+
+    def _scores_for_match(self, match: Match, data: dict) -> dict[str, int]:
+        _, brazil_is_home = self._brazil_context(match)
+
+        if "brazil_score" not in data and "opponent_score" not in data:
+            return {
+                "home_score": data["home_score"],
+                "away_score": data["away_score"],
+            }
+
+        if brazil_is_home:
+            return {
+                "home_score": data["brazil_score"],
+                "away_score": data["opponent_score"],
+            }
+
+        return {
+            "home_score": data["opponent_score"],
+            "away_score": data["brazil_score"],
+        }
+
+    def _brazil_context(self, match: Match) -> tuple[str, bool]:
+        if str(match.home_team or "").strip().lower() == "brasil":
+            return match.away_team, True
+
+        if str(match.away_team or "").strip().lower() == "brasil":
+            return match.home_team, False
+
+        raise ValueError("Este jogo nao e uma partida do Brasil.")

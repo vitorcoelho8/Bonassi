@@ -74,6 +74,38 @@ def save_match_result(match_id: str):
     )
 
 
+@admin_bp.patch("/matches/<match_id>/reopen")
+@admin_bp.patch("/matches/<match_id>/reset-result")
+@admin_required
+def reopen_match(match_id: str):
+    try:
+        match, was_reopened = AdminService().reopen_match(match_id)
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 404
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify({"error": "Banco de dados indisponivel."}), 503
+
+    message = (
+        "Partida reaberta para palpites com sucesso."
+        if was_reopened
+        else "A partida ja esta aberta para palpites."
+    )
+    return jsonify(
+        {
+            "message": message,
+            "match": {
+                "id": match.id,
+                "home_team": match.home_team,
+                "away_team": match.away_team,
+                "home_score": match.home_score,
+                "away_score": match.away_score,
+                "status": match.status.upper() if match.status else match.status,
+            },
+        }
+    )
+
+
 @admin_bp.get("/bonus/pending")
 @admin_required
 def list_pending_bonus():

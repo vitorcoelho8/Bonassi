@@ -83,6 +83,32 @@
       </form>
     </dialog>
 
+    <dialog id="reopen-match-modal" class="result-modal" aria-labelledby="reopen-match-modal-title">
+      <form id="reopen-match-form" class="result-form" method="dialog">
+        <div class="result-modal-header">
+          <h2 id="reopen-match-modal-title">Reabrir palpites</h2>
+          <button class="icon-action" type="button" data-close-reopen-match aria-label="Fechar">
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
+          </button>
+        </div>
+
+        <section class="reopen-warning">
+          <strong id="reopen-match-title">Partida selecionada</strong>
+          <p>Voc&ecirc; est&aacute; prestes a reabrir esta partida para palpites.</p>
+          <p>Ao confirmar, a partida voltar&aacute; para AGENDADO, os palpites existentes n&atilde;o ser&atilde;o exclu&iacute;dos e o placar salvo n&atilde;o ser&aacute; apagado.</p>
+          <p>A pontua&ccedil;&atilde;o desta partida deixar&aacute; de contar no ranking enquanto ela n&atilde;o estiver FINALIZADA. Ao lan&ccedil;ar ou editar o resultado novamente, os pontos ser&atilde;o recalculados.</p>
+          <p>Deseja continuar?</p>
+        </section>
+
+        <p id="reopen-match-feedback" class="form-feedback" aria-live="polite"></p>
+
+        <div class="result-actions">
+          <button class="secondary-button" type="button" data-close-reopen-match>Cancelar</button>
+          <button class="danger-button" type="submit">Confirmar reabertura</button>
+        </div>
+      </form>
+    </dialog>
+
     <dialog id="next-match-modal" class="result-modal" aria-labelledby="next-match-modal-title">
       <form id="next-match-form" class="result-form" method="dialog" novalidate>
         <div class="result-modal-header">
@@ -114,18 +140,6 @@
             <input id="next-match-time" name="match_time" type="time" required>
           </label>
         </div>
-
-        <fieldset class="field bonus-checklist next-match-side">
-          <legend>Brasil ser&aacute;</legend>
-          <label class="check-option">
-            <input type="radio" name="brazil_side" value="HOME" required>
-            <span>Mandante</span>
-          </label>
-          <label class="check-option">
-            <input type="radio" name="brazil_side" value="AWAY">
-            <span>Visitante</span>
-          </label>
-        </fieldset>
 
         <section id="next-match-preview" class="next-match-preview" aria-live="polite"></section>
 
