@@ -20,4 +20,4 @@ WORKDIR /app/backend
 
 EXPOSE 5001
 
-CMD ["sh", "-c", "flask --app app.main:app db upgrade && flask --app app.main:app init-db && gunicorn --bind 0.0.0.0:5001 app.main:app"]
+CMD ["sh", "-c", "flask --app app.main:app db upgrade && flask --app app.main:app init-db && python seed_teams.py && python seed_matches.py && gunicorn --bind 0.0.0.0:5001 app.main:app"]
