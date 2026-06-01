@@ -46,8 +46,8 @@
           <p>${escapeHtml(user.phone)}</p>
         </div>
         <span class="status-chip">Ativo</span>
-        <button class="icon-action" type="button" data-visit-id="${escapeHtml(user.id)}" aria-label="Visitar perfil de ${escapeHtml(user.name)}">
-          <span class="material-symbols-outlined" aria-hidden="true">more_vert</span>
+        <button class="secondary-button visit-profile-button" type="button" data-visit-id="${escapeHtml(user.id)}">
+          Visitar perfil
         </button>
       </article>
     `).join("");

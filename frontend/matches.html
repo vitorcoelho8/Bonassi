@@ -27,17 +27,52 @@
         <p>Partidas cadastradas para a primeira fase.</p>
       </section>
 
+      <p id="matches-feedback" class="form-feedback" aria-live="polite"></p>
+
       <section class="matches-board" aria-label="Lista de jogos">
         <div class="matches-header">
           <span>Partida</span>
           <span>Data</span>
           <span>Status</span>
+          <span>Ações</span>
         </div>
         <div id="matches-list" class="matches-list">
           <p class="users-empty">Carregando jogos...</p>
         </div>
       </section>
     </main>
+
+    <dialog id="result-modal" class="result-modal" aria-labelledby="result-modal-title">
+      <form id="result-form" class="result-form" method="dialog">
+        <div class="result-modal-header">
+          <h2 id="result-modal-title">Resultado da partida</h2>
+          <button class="icon-action" type="button" data-close-result aria-label="Fechar">
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
+          </button>
+        </div>
+
+        <div class="result-scoreline">
+          <strong id="result-home-team">Mandante</strong>
+          <label class="score-input">
+            <span class="hidden">Gols do mandante</span>
+            <input id="result-home-score" name="home_score" type="number" inputmode="numeric" min="0" step="1" required>
+          </label>
+          <span class="result-versus">x</span>
+          <label class="score-input">
+            <span class="hidden">Gols do visitante</span>
+            <input id="result-away-score" name="away_score" type="number" inputmode="numeric" min="0" step="1" required>
+          </label>
+          <strong id="result-away-team">Visitante</strong>
+        </div>
+
+        <p id="result-feedback" class="form-feedback" aria-live="polite"></p>
+
+        <div class="result-actions">
+          <button class="secondary-button" type="button" data-close-result>Cancelar</button>
+          <button class="primary-button" type="submit">Salvar resultado</button>
+        </div>
+      </form>
+    </dialog>
 
     <nav class="bottom-nav" aria-label="Navegacao principal">
       <a href="/matches" class="nav-item active" aria-current="page">

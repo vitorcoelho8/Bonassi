@@ -6,6 +6,42 @@ from app.participants.models import Participant
 from app.predictions.models import Prediction
 
 
+def get_match_result(home_score: int, away_score: int) -> str:
+    if home_score > away_score:
+        return "HOME_WIN"
+    if home_score < away_score:
+        return "AWAY_WIN"
+    return "DRAW"
+
+
+def calculate_match_points(
+    predicted_home: int,
+    predicted_away: int,
+    real_home: int,
+    real_away: int,
+) -> int:
+    if predicted_home == real_home and predicted_away == real_away:
+        return 8
+
+    points = 0
+    predicted_result = get_match_result(predicted_home, predicted_away)
+    real_result = get_match_result(real_home, real_away)
+
+    if predicted_result == real_result:
+        points += 6
+
+    if not _picked_opposite_winner(predicted_result, real_result) and (
+        predicted_home == real_home or predicted_away == real_away
+    ):
+        points += 1
+
+    return points
+
+
+def _picked_opposite_winner(predicted_result: str, real_result: str) -> bool:
+    return {predicted_result, real_result} == {"HOME_WIN", "AWAY_WIN"}
+
+
 class PredictionRepository:
     def list_by_participant(self, participant_id: str) -> list[Prediction]:
         return Prediction.query.filter_by(participant_id=participant_id).all()

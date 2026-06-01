@@ -44,6 +44,10 @@
     ranking: () => request("/api/ranking/"),
     matches: () => request("/api/matches/"),
     nextMatch: () => request("/api/matches/next"),
+    saveMatchResult: (matchId, payload) => request(`/api/admin/matches/${encodeURIComponent(matchId)}/result`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
     predictions: () => request("/api/predictions/"),
     participantPredictions: (participantId) => request(`/api/predictions/participant/${encodeURIComponent(participantId)}`),
     savePrediction: (payload) => request("/api/predictions/", {
@@ -56,6 +60,15 @@
     }),
     saveBonus: (payload) => request("/api/bonus/", {
       method: "POST",
+      body: JSON.stringify(payload),
+    }),
+    participantBonus: (participantId) => request(`/api/bonus/participant/${encodeURIComponent(participantId)}`),
+    pendingBonus: () => request("/api/admin/bonus/pending"),
+    approveBonus: (bonusId) => request(`/api/admin/bonus/${encodeURIComponent(bonusId)}/approve`, {
+      method: "PATCH",
+    }),
+    rejectBonus: (bonusId, payload = {}) => request(`/api/admin/bonus/${encodeURIComponent(bonusId)}/reject`, {
+      method: "PATCH",
       body: JSON.stringify(payload),
     }),
     adminParticipants: () => request("/api/participants"),

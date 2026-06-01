@@ -3,6 +3,13 @@ from app.database import db
 from app.participants.models import Participant
 
 
+BONUS_DESCRIPTIONS = {
+    "FOLLOW_BONASSI": "Seguir a Bonassi",
+    "STORY_MENTION": "Story marcando a clinica",
+    "INSTAGRAM_REVIEW": "Avaliar/interagir com a Bonassi no Instagram",
+    "REFERRAL": "Indicar alguem para fazer parte do time de pacientes",
+}
+
 BONUS_POINTS = {
     "FOLLOW_BONASSI": 4,
     "STORY_MENTION": 4,
@@ -13,13 +20,27 @@ BONUS_POINTS = {
 
 class BonusRepository:
     def list_by_participant(self, participant_id: str) -> list[BonusAnswer]:
-        return BonusAnswer.query.filter_by(participant_id=participant_id).all()
+        return (
+            BonusAnswer.query.filter_by(participant_id=participant_id)
+            .order_by(BonusAnswer.created_at.desc())
+            .all()
+        )
+
+    def list_pending(self) -> list[BonusAnswer]:
+        return (
+            BonusAnswer.query.filter_by(status="PENDING")
+            .order_by(BonusAnswer.created_at.asc())
+            .all()
+        )
 
     def get_answer(self, participant_id: str, question_key: str) -> BonusAnswer | None:
         return BonusAnswer.query.filter_by(
             participant_id=participant_id,
             question_key=question_key,
         ).first()
+
+    def get_by_id(self, bonus_id: str) -> BonusAnswer | None:
+        return db.session.get(BonusAnswer, bonus_id)
 
     def save(self, answer: BonusAnswer) -> BonusAnswer:
         db.session.add(answer)
@@ -34,6 +55,9 @@ class BonusService:
     def list_by_participant(self, participant_id: str) -> list[BonusAnswer]:
         return self.repository.list_by_participant(participant_id)
 
+    def list_pending(self) -> list[BonusAnswer]:
+        return self.repository.list_pending()
+
     def upsert(self, data: dict) -> BonusAnswer:
         participant = db.session.get(Participant, data["participant_id"])
         if participant is None or not participant.is_active or participant.role != "participant":
@@ -43,6 +67,8 @@ class BonusService:
 
         if answer is None:
             answer = BonusAnswer(participant_id=participant.id, question_key=data["question_key"])
+        elif answer.status == "APPROVED":
+            raise ValueError("Este bonus ja foi aprovado para o participante.")
 
         answer.bonus_type = data["bonus_type"]
         answer.evidence_text = data["evidence_text"]
@@ -51,4 +77,20 @@ class BonusService:
         answer.status = "PENDING"
         answer.points = BONUS_POINTS[data["bonus_type"]]
         answer.answer = data["answer"]
+        return self.repository.save(answer)
+
+    def approve(self, bonus_id: str) -> BonusAnswer:
+        answer = self.repository.get_by_id(bonus_id)
+        if answer is None:
+            raise ValueError("Solicitacao de bonus nao encontrada.")
+
+        answer.status = "APPROVED"
+        return self.repository.save(answer)
+
+    def reject(self, bonus_id: str) -> BonusAnswer:
+        answer = self.repository.get_by_id(bonus_id)
+        if answer is None:
+            raise ValueError("Solicitacao de bonus nao encontrada.")
+
+        answer.status = "REJECTED"
         return self.repository.save(answer)

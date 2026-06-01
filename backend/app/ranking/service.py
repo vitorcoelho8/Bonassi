@@ -1,4 +1,4 @@
-from sqlalchemy import func
+from sqlalchemy import and_, case, func
 
 from app.bonus.models import BonusAnswer
 from app.database import db
@@ -36,19 +36,32 @@ class RankingService:
         rows = (
             db.session.query(
                 Prediction.participant_id,
-                func.count(Prediction.id).label("exact_scores"),
+                func.coalesce(
+                    func.sum(
+                        case(
+                            (
+                                and_(
+                                    Prediction.home_score == Match.home_score,
+                                    Prediction.away_score == Match.away_score,
+                                ),
+                                1,
+                            ),
+                            else_=0,
+                        )
+                    ),
+                    0,
+                ).label("exact_scores"),
+                func.coalesce(func.sum(Prediction.points), 0).label("points"),
             )
             .join(Match)
             .filter(func.upper(Match.status) == "FINISHED")
-            .filter(Prediction.home_score == Match.home_score)
-            .filter(Prediction.away_score == Match.away_score)
             .group_by(Prediction.participant_id)
             .all()
         )
 
         return {
-            participant_id: {"exact_scores": exact_scores, "points": exact_scores * 10}
-            for participant_id, exact_scores in rows
+            participant_id: {"exact_scores": int(exact_scores or 0), "points": int(points or 0)}
+            for participant_id, exact_scores, points in rows
         }
 
     def _bonus_points(self) -> dict[str, int]:

@@ -4,28 +4,51 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title>Bolao Hexa 2026 - Bonus</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=Manrope:wght@500;600;700&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <script src="js/api.js" defer></script>
     <script src="js/bonus.js" defer></script>
   </head>
   <body class="app-page">
-    <main class="app-content compact-page" aria-labelledby="bonus-title">
+    <header class="app-topbar">
+      <div class="brand-lockup">
+        <img class="profile-avatar" src="img/bonassi-logo.svg" alt="Bonassi">
+        <h1>Bonus</h1>
+      </div>
+      <a class="score-pill" href="ranking.html">Home</a>
+    </header>
+
+    <main class="app-content" aria-labelledby="bonus-title">
       <section class="page-heading">
         <h1 id="bonus-title">Bonus</h1>
         <p id="bonus-participant-heading">Carregando participante...</p>
       </section>
+      <section id="bonus-participant-card" class="data-card data-stack hidden"></section>
       <form id="bonus-form" class="data-card stack-form">
+        <fieldset class="field bonus-checklist">
+          <legend>Tipo de bonus</legend>
+          <label class="check-option">
+            <input type="radio" name="bonus_type" value="FOLLOW_BONASSI" required>
+            <span>Seguir a Bonassi: +4 pontos</span>
+          </label>
+          <label class="check-option">
+            <input type="radio" name="bonus_type" value="STORY_MENTION">
+            <span>Story marcando a clinica: +4 pontos</span>
+          </label>
+          <label class="check-option">
+            <input type="radio" name="bonus_type" value="INSTAGRAM_REVIEW">
+            <span>Avaliar/interagir com a Bonassi no Instagram: +2 pontos</span>
+          </label>
+          <label class="check-option">
+            <input type="radio" name="bonus_type" value="REFERRAL">
+            <span>Indicar alguem: +6 pontos</span>
+          </label>
+        </fieldset>
         <label class="field">
-          <span>Tipo de bonus</span>
-          <select id="bonus-type" name="bonus_type" required>
-            <option value="FOLLOW_BONASSI">Seguir a Bonassi: +4 pontos</option>
-            <option value="STORY_MENTION">Story marcando a clinica: +4 pontos</option>
-            <option value="INSTAGRAM_REVIEW">Avaliar/interagir com a Bonassi no Instagram: +2 pontos</option>
-            <option value="REFERRAL">Indicar alguem: +6 pontos</option>
-          </select>
-        </label>
-        <label class="field">
-          <span>Observacao</span>
+          <span>Observacao/evidencia</span>
           <textarea name="evidence_text" rows="3" required></textarea>
         </label>
         <div id="referral-fields" class="split-fields hidden">
@@ -42,9 +65,47 @@
         <button class="primary-button" type="submit">Enviar solicitacao</button>
         <button id="back-profile-button" class="secondary-button" type="button">Voltar para perfil</button>
       </form>
+      <section id="participant-bonus-panel" class="data-card data-stack hidden">
+        <div class="section-toolbar">
+          <div>
+            <h2>Bonus solicitados</h2>
+            <p>Acompanhe o status das solicitacoes deste participante.</p>
+          </div>
+        </div>
+        <div id="participant-bonus-list" class="bonus-list"></div>
+      </section>
+      <section id="admin-bonus-panel" class="data-card data-stack hidden">
+        <div class="section-toolbar">
+          <div>
+            <h2>Solicitacoes pendentes</h2>
+            <p>Aprove ou recuse os bonus enviados pelos participantes.</p>
+          </div>
+        </div>
+        <p id="admin-bonus-feedback" class="form-feedback" role="status" aria-live="polite"></p>
+        <div id="admin-bonus-list" class="bonus-list"></div>
+      </section>
       <section class="screen-actions">
         <button id="finish-button" class="secondary-button" type="button">Finalizar atendimento</button>
       </section>
     </main>
+
+    <nav class="bottom-nav" aria-label="Navegacao principal">
+      <a href="/matches" class="nav-item">
+        <span class="material-symbols-outlined nav-icon" aria-hidden="true">sports_soccer</span>
+        <span>Jogos</span>
+      </a>
+      <a href="ranking.html" class="nav-item">
+        <span class="material-symbols-outlined nav-icon" aria-hidden="true">leaderboard</span>
+        <span>Ranking</span>
+      </a>
+      <a id="bonus-nav-link" href="bonus.html" class="nav-item active" aria-current="page">
+        <span class="material-symbols-outlined nav-icon filled" aria-hidden="true">workspace_premium</span>
+        <span>Bonus</span>
+      </a>
+      <a href="usuarios.html" class="nav-item">
+        <span class="material-symbols-outlined nav-icon" aria-hidden="true">group</span>
+        <span>Usuarios</span>
+      </a>
+    </nav>
   </body>
 </html>
