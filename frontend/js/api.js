@@ -59,6 +59,11 @@
     ranking: () => request("/api/ranking/"),
     matches: () => request("/api/matches/"),
     nextMatch: () => request("/api/matches/next"),
+    matchPhases: () => request("/api/admin/matches/phases"),
+    createNextBrazilMatch: (payload) => request("/api/admin/matches/next-brazil-match", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    }),
     saveMatchResult: (matchId, payload) => request(`/api/admin/matches/${encodeURIComponent(matchId)}/result`, {
       method: "PUT",
       body: JSON.stringify(payload),

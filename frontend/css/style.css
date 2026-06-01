@@ -433,10 +433,21 @@ a {
   box-shadow: var(--shadow);
 }
 
+.matches-actions {
+  display: flex;
+  justify-content: center;
+  margin-top: 18px;
+}
+
+.add-match-button {
+  gap: 8px;
+  padding: 0 18px;
+}
+
 .matches-header,
 .match-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(92px, 128px) 104px 126px;
+  grid-template-columns: minmax(0, 1.2fr) minmax(108px, 144px) minmax(92px, 128px) 104px 126px;
   gap: 10px;
   align-items: center;
   padding: 12px 14px;
@@ -462,8 +473,7 @@ a {
   gap: 2px;
 }
 
-.match-teams strong,
-.match-teams span {
+.match-teams strong {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -473,10 +483,14 @@ a {
   font-family: var(--font-headline);
 }
 
-.match-teams span,
+.match-phase,
 .match-row time {
   color: var(--text-muted);
   font-size: 0.875rem;
+}
+
+.match-phase {
+  font-weight: 700;
 }
 
 .match-row time {
@@ -573,6 +587,35 @@ a {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
+}
+
+.next-match-side {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.next-match-side legend {
+  grid-column: 1 / -1;
+}
+
+.next-match-side .check-option {
+  margin: 0;
+}
+
+.next-match-preview {
+  display: grid;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--surface-variant);
+  border-radius: 10px;
+  background: var(--surface-soft);
+}
+
+.next-match-preview strong,
+.next-match-preview span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .leaderboard-header,
@@ -1096,12 +1139,17 @@ a {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-areas:
       "teams action"
+      "phase action"
       "date status";
     gap: 8px 12px;
   }
 
   .match-row .match-teams {
     grid-area: teams;
+  }
+
+  .match-row .match-phase {
+    grid-area: phase;
   }
 
   .match-row time {
@@ -1125,6 +1173,14 @@ a {
 
   .match-row .result-button span:last-child {
     display: none;
+  }
+
+  .add-match-button {
+    width: 100%;
+  }
+
+  .next-match-side {
+    grid-template-columns: 1fr;
   }
 
   .result-scoreline {

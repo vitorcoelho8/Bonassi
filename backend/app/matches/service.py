@@ -16,6 +16,7 @@ class MatchRepository:
     def get_next(self) -> Match | None:
         return (
             Match.query.filter_by(is_active=True)
+            .filter(Match.is_brazil_match.is_(True))
             .filter(Match.starts_at.isnot(None))
             .filter(Match.starts_at > datetime.now(timezone.utc))
             .filter(func.upper(Match.status) == "SCHEDULED")

@@ -6,6 +6,7 @@ from app.admin.service import AdminService
 from app.bonus.schemas import BonusAnswerSchema
 from app.bonus.service import BonusService
 from app.database import db
+from app.matches.schemas import MatchSchema
 from app.participants.routes import admin_required
 
 admin_bp = Blueprint("admin", __name__)
@@ -16,6 +17,31 @@ admin_bp = Blueprint("admin", __name__)
 def list_participants():
     participants = AdminService().list_participants()
     return jsonify({"items": AdminParticipantSchema().dump_many(participants)})
+
+
+@admin_bp.get("/matches/phases")
+@admin_required
+def list_next_match_phases():
+    return jsonify(AdminService().list_next_match_phases())
+
+
+@admin_bp.post("/matches/next-brazil-match")
+@admin_required
+def create_next_brazil_match():
+    try:
+        match = AdminService().create_next_brazil_match(request.get_json(silent=True) or {})
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify({"error": "Banco de dados indisponivel."}), 503
+
+    return jsonify(
+        {
+            "message": "Proxima partida do Brasil criada com sucesso.",
+            "match": MatchSchema().dump(match),
+        }
+    ), 201
 
 
 @admin_bp.put("/matches/<match_id>/result")

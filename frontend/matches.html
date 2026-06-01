@@ -24,7 +24,13 @@
     <main class="app-content" aria-labelledby="matches-title">
       <section class="page-heading">
         <h2 id="matches-title">Jogos do Brasil</h2>
-        <p>Partidas cadastradas para a primeira fase.</p>
+        <p>Partidas cadastradas para o caminho do Brasil.</p>
+        <div class="matches-actions">
+          <button id="create-brazil-match-button" class="primary-button add-match-button" type="button">
+            <span class="material-symbols-outlined" aria-hidden="true">add</span>
+            <span>Criar pr&oacute;xima partida do Brasil</span>
+          </button>
+        </div>
       </section>
 
       <p id="matches-feedback" class="form-feedback" aria-live="polite"></p>
@@ -32,6 +38,7 @@
       <section class="matches-board" aria-label="Lista de jogos">
         <div class="matches-header">
           <span>Partida</span>
+          <span>Fase</span>
           <span>Data</span>
           <span>Status</span>
           <span>Ações</span>
@@ -70,6 +77,61 @@
         <div class="result-actions">
           <button class="secondary-button" type="button" data-close-result>Cancelar</button>
           <button class="primary-button" type="submit">Salvar resultado</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="next-match-modal" class="result-modal" aria-labelledby="next-match-modal-title">
+      <form id="next-match-form" class="result-form" method="dialog" novalidate>
+        <div class="result-modal-header">
+          <h2 id="next-match-modal-title">Criar pr&oacute;xima partida do Brasil</h2>
+          <button class="icon-action" type="button" data-close-next-match aria-label="Fechar">
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
+          </button>
+        </div>
+
+        <label class="field">
+          <span>Fase</span>
+          <select id="next-match-phase" name="phase" required>
+            <option value="">Selecione a fase</option>
+          </select>
+        </label>
+
+        <label class="field">
+          <span>Advers&aacute;rio</span>
+          <input id="next-match-opponent" name="opponent_team" type="text" placeholder="Digite o adversario do Brasil" autocomplete="off" required>
+        </label>
+
+        <div class="split-fields">
+          <label class="field">
+            <span>Data</span>
+            <input id="next-match-date" name="match_date" type="date" required>
+          </label>
+          <label class="field">
+            <span>Hor&aacute;rio</span>
+            <input id="next-match-time" name="match_time" type="time" required>
+          </label>
+        </div>
+
+        <fieldset class="field bonus-checklist next-match-side">
+          <legend>Brasil ser&aacute;</legend>
+          <label class="check-option">
+            <input type="radio" name="brazil_side" value="HOME" required>
+            <span>Mandante</span>
+          </label>
+          <label class="check-option">
+            <input type="radio" name="brazil_side" value="AWAY">
+            <span>Visitante</span>
+          </label>
+        </fieldset>
+
+        <section id="next-match-preview" class="next-match-preview" aria-live="polite"></section>
+
+        <p id="next-match-feedback" class="form-feedback" aria-live="polite"></p>
+
+        <div class="result-actions">
+          <button class="secondary-button" type="button" data-close-next-match>Cancelar</button>
+          <button class="primary-button" type="submit">Criar partida</button>
         </div>
       </form>
     </dialog>
