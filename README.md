@@ -14,17 +14,4 @@ Aplicacao Flask separada em backend de API e frontend estatico.
 ## Rodando localmente
 
 ```bash
-cd backend
-copy .env.sample .env
-flask --app app.main:app init-db
-flask --app app.main:app run
-```
 
-Com Docker:
-
-```bash
-copy backend\.env.sample backend\.env
-docker compose up --build
-```
-
-O usuario admin inicial e `admin@bonassi.com` com senha `123456a!`.
