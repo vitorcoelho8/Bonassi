@@ -10,3 +10,9 @@ ranking_bp = Blueprint("ranking", __name__)
 @login_required
 def global_ranking():
     return jsonify({"items": RankingService().list_global()})
+
+
+@ranking_bp.get("/round")
+@login_required
+def round_ranking():
+    return jsonify(RankingService().list_round())

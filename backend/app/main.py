@@ -62,6 +62,13 @@ def register_frontend_routes(app: Flask) -> None:
 
         return redirect(url_for("frontend_page", filename="ranking.html"))
 
+    @app.get("/ranking")
+    def ranking_page():
+        if not _is_authenticated():
+            return redirect(url_for("login_page"))
+
+        return send_from_directory(frontend_dir, "ranking.html")
+
     @app.get("/login")
     def login_page():
         return send_from_directory(frontend_dir, "index.html")

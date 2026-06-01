@@ -3,8 +3,10 @@ from sqlalchemy import and_, case, func
 from app.bonus.models import BonusAnswer
 from app.database import db
 from app.matches.models import Match
+from app.matches.phases import phase_label
 from app.participants.models import Participant
 from app.predictions.models import Prediction
+from app.teams.models import Team
 
 
 class RankingService:
@@ -31,6 +33,20 @@ class RankingService:
             )
 
         return sorted(ranking, key=lambda item: item["points"], reverse=True)
+
+    def list_round(self) -> dict:
+        match = self._last_finished_brazil_match()
+        if match is None:
+            return {
+                "match": None,
+                "ranking": [],
+                "message": "Nenhuma partida finalizada ainda.",
+            }
+
+        return {
+            "match": self._round_match_payload(match),
+            "ranking": self._round_ranking(match),
+        }
 
     def _prediction_points(self) -> dict[str, dict[str, int]]:
         rows = (
@@ -76,3 +92,71 @@ class RankingService:
         )
 
         return {participant_id: int(points or 0) for participant_id, points in rows}
+
+    def _last_finished_brazil_match(self) -> Match | None:
+        return (
+            Match.query.filter(func.upper(Match.status) == "FINISHED")
+            .filter(Match.is_brazil_match.is_(True))
+            .filter(Match.home_score.isnot(None))
+            .filter(Match.away_score.isnot(None))
+            .filter(Match.starts_at.isnot(None))
+            .order_by(Match.starts_at.desc())
+            .first()
+        )
+
+    def _round_match_payload(self, match: Match) -> dict:
+        teams = self._teams_by_name([match.home_team, match.away_team])
+        home_team = teams.get(match.home_team)
+        away_team = teams.get(match.away_team)
+
+        return {
+            "id": match.id,
+            "home_team": match.home_team,
+            "away_team": match.away_team,
+            "home_score": match.home_score,
+            "away_score": match.away_score,
+            "starts_at": match.starts_at.isoformat() if match.starts_at else None,
+            "phase": match.phase,
+            "phase_label": phase_label(match.phase),
+            "home_flag_url": home_team.flag_url if home_team else None,
+            "away_flag_url": away_team.flag_url if away_team else None,
+            "display_score": (
+                f"{match.home_team} {match.home_score} x {match.away_score} {match.away_team}"
+            ),
+        }
+
+    def _round_ranking(self, match: Match) -> list[dict]:
+        rows = (
+            db.session.query(Prediction, Participant)
+            .join(Participant, Prediction.participant_id == Participant.id)
+            .filter(Prediction.match_id == match.id)
+            .filter(Participant.is_active.is_(True))
+            .filter(Participant.role == "participant")
+            .order_by(Prediction.points.desc(), Participant.name.asc())
+            .all()
+        )
+
+        ranking = []
+        for position, (prediction, participant) in enumerate(rows, start=1):
+            ranking.append(
+                {
+                    "position": position,
+                    "participant_id": participant.id,
+                    "name": participant.name,
+                    "points": int(prediction.points or 0),
+                    "exact": (
+                        prediction.home_score == match.home_score
+                        and prediction.away_score == match.away_score
+                    ),
+                    "predicted_score": (
+                        f"{match.home_team} {prediction.home_score} x "
+                        f"{prediction.away_score} {match.away_team}"
+                    ),
+                }
+            )
+
+        return ranking
+
+    def _teams_by_name(self, names: list[str]) -> dict[str, Team]:
+        rows = Team.query.filter(Team.name.in_(names)).all()
+        return {team.name: team for team in rows}

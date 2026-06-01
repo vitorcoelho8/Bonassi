@@ -57,6 +57,7 @@
     user: (id) => request(`/api/users/${encodeURIComponent(id)}`),
     searchUsers: (term) => request(`/api/users/search?term=${encodeURIComponent(term)}`),
     ranking: () => request("/api/ranking/"),
+    roundRanking: () => request("/api/ranking/round"),
     matches: () => request("/api/matches/"),
     nextMatch: () => request("/api/matches/next"),
     teams: () => request("/api/teams/"),

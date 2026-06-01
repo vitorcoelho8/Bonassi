@@ -10,43 +10,106 @@
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
     <link rel="stylesheet" href="css/style.css">
     <script src="js/api.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
     <script src="js/ranking.js" defer></script>
   </head>
   <body class="app-page">
     <header class="app-topbar">
       <div class="brand-lockup">
-        <img class="profile-avatar" src="img/bonassi-logo.svg" alt="Bonassi">
-        <details class="hamburger-menu">
-          <summary aria-label="Abrir menu">
-            <span></span>
-            <span></span>
-            <span></span>
-          </summary>
-          <nav aria-label="Menu principal">
-            <a href="usuarios.html">Painel adm</a>
-          </nav>
-        </details>
-        <h1>Bolao Hexa 2026</h1>
+        <img class="profile-avatar" src="img/bonassi-logo.png" alt="Bonassi">
       </div>
-      <span id="user-score" class="score-pill">0 pts</span>
+      <button id="logout-button" class="score-pill logout-button" type="button">
+        <span class="material-symbols-outlined" aria-hidden="true">door_open</span>
+        <span>Sair</span>
+      </button>
     </header>
 
     <main class="app-content" aria-labelledby="ranking-title">
       <section class="page-heading">
         <h2 id="ranking-title">Ranking Global</h2>
-        <p>Veja quem esta liderando as apostas.</p>
+        <p id="ranking-subtitle">Veja quem esta liderando as apostas.</p>
       </section>
 
-      <section id="podium" class="podium" aria-label="Top 3 jogadores"></section>
+      <section class="ranking-tabs" role="tablist" aria-label="Visualizacao do ranking">
+        <button id="ranking-tab-global" class="ranking-tab active" type="button" role="tab" aria-selected="true" aria-controls="global-ranking-view">
+          Ranking Global
+        </button>
+        <button id="ranking-tab-round" class="ranking-tab" type="button" role="tab" aria-selected="false" aria-controls="round-ranking-view">
+          Ranking da Rodada
+        </button>
+      </section>
 
-      <section class="leaderboard" aria-label="Classificacao">
-        <div class="leaderboard-header">
-          <span>Pos</span>
-          <span>Jogador</span>
-          <span>Exatos</span>
-          <span>Pontos</span>
+      <section class="ranking-actions" aria-label="Acoes do ranking">
+        <button id="share-ranking-button" class="primary-button share-ranking-button" type="button" disabled>
+          <span class="material-symbols-outlined" aria-hidden="true">ios_share</span>
+          <span>Compartilhar ranking</span>
+        </button>
+        <p id="share-ranking-feedback" class="form-feedback" aria-live="polite"></p>
+      </section>
+
+      <div id="ranking-swipe-area" class="ranking-swipe-area">
+        <section id="global-ranking-view" class="ranking-view active" role="tabpanel" aria-labelledby="ranking-tab-global">
+          <section id="podium" class="podium" aria-label="Top 3 jogadores"></section>
+
+          <section class="leaderboard" aria-label="Classificacao global">
+            <div class="leaderboard-header">
+              <span>Pos</span>
+              <span>Jogador</span>
+              <span>Exatos</span>
+              <span>Pontos</span>
+            </div>
+            <div id="ranking-list"></div>
+            <div id="ranking-pagination" class="ranking-pagination" hidden>
+              <button id="ranking-prev-page" class="pagination-button" type="button" aria-label="Pagina anterior">
+                <span class="material-symbols-outlined" aria-hidden="true">chevron_left</span>
+              </button>
+              <span id="ranking-page-status" class="ranking-page-status">Pagina 1 de 1</span>
+              <button id="ranking-next-page" class="pagination-button" type="button" aria-label="Proxima pagina">
+                <span class="material-symbols-outlined" aria-hidden="true">chevron_right</span>
+              </button>
+            </div>
+          </section>
+        </section>
+
+        <section id="round-ranking-view" class="ranking-view" role="tabpanel" aria-labelledby="ranking-tab-round" hidden>
+          <section class="ranking-view-heading">
+            <h3>Ranking da Rodada</h3>
+            <p>Pontuacao da ultima partida finalizada</p>
+          </section>
+
+          <section id="round-match-card" class="round-match-card" aria-label="Partida da rodada"></section>
+          <section id="round-empty-state" class="round-empty-state" hidden>Nenhuma rodada finalizada ainda.</section>
+          <section id="round-podium" class="podium" aria-label="Top 3 da rodada"></section>
+
+          <section id="round-ranking-board" class="leaderboard round-ranking-table" aria-label="Classificacao da rodada" hidden>
+            <div class="leaderboard-header round-ranking-header">
+              <span>Pos</span>
+              <span>Jogador</span>
+              <span>Palpite</span>
+              <span>Exato</span>
+              <span>Pontos</span>
+            </div>
+            <div id="round-ranking-list"></div>
+          </section>
+        </section>
+      </div>
+
+      <section id="ranking-share-card" class="ranking-share-card" aria-hidden="true">
+        <div class="share-card-shell">
+          <header class="share-card-header">
+            <img src="img/bonassi-logo.png" alt="">
+            <div>
+              <p>Bol&atilde;o Bonassi</p>
+              <h2 id="ranking-share-title">Ranking Global</h2>
+            </div>
+          </header>
+          <div id="ranking-share-match" class="share-round-match" hidden></div>
+          <div id="ranking-share-list" class="ranking-share-list"></div>
+          <footer class="share-card-footer">
+            <span id="ranking-share-updated">Atualizado agora</span>
+            <strong>Copa 2026 &bull; Bonassi</strong>
+          </footer>
         </div>
-        <div id="ranking-list"></div>
       </section>
     </main>
 
@@ -55,7 +118,7 @@
         <span class="material-symbols-outlined nav-icon" aria-hidden="true">sports_soccer</span>
         <span>Jogos</span>
       </a>
-      <a href="ranking.html" class="nav-item active" aria-current="page">
+      <a href="/ranking" class="nav-item active" aria-current="page">
         <span class="material-symbols-outlined nav-icon filled" aria-hidden="true">leaderboard</span>
         <span>Ranking</span>
       </a>
