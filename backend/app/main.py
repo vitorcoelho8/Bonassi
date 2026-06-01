@@ -13,6 +13,7 @@ from app.participants.routes import participants_bp
 from app.participants.service import ParticipantService
 from app.predictions.routes import predictions_bp
 from app.ranking.routes import ranking_bp
+from app.teams.routes import teams_bp
 
 
 def create_app(config_class: type[Config] = Config) -> Flask:
@@ -36,6 +37,7 @@ def register_blueprints(app: Flask) -> None:
     app.register_blueprint(predictions_bp, url_prefix="/api/predictions")
     app.register_blueprint(bonus_bp, url_prefix="/api/bonus")
     app.register_blueprint(ranking_bp, url_prefix="/api/ranking")
+    app.register_blueprint(teams_bp, url_prefix="/api/teams")
     app.register_blueprint(admin_bp, url_prefix="/api/admin")
 
 

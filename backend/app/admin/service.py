@@ -11,6 +11,7 @@ from app.participants.models import Participant
 from app.participants.service import ParticipantService
 from app.predictions.models import Prediction
 from app.predictions.service import calculate_match_points
+from app.teams.models import Team
 
 
 DEFAULT_ADMIN_EMAIL = "admin@bonassi.com"
@@ -75,6 +76,7 @@ class AdminService:
     def create_next_brazil_match(self, data: dict) -> Match:
         phase = self._parse_next_match_phase(data)
         opponent_team = self._parse_opponent_team(data)
+        brazil_side = self._parse_brazil_side(data)
         starts_at = self._parse_starts_at(data)
 
         if self._has_brazil_match_for_phase(phase):
@@ -84,8 +86,8 @@ class AdminService:
             raise ValueError("Ja existe uma partida futura do Brasil disponivel para palpites.")
 
         match = Match(
-            home_team="Brasil",
-            away_team=opponent_team,
+            home_team="Brasil" if brazil_side == "HOME" else opponent_team,
+            away_team=opponent_team if brazil_side == "HOME" else "Brasil",
             starts_at=starts_at,
             home_score=None,
             away_score=None,
@@ -173,6 +175,28 @@ class AdminService:
         return phase
 
     def _parse_opponent_team(self, data: dict) -> str:
+        opponent_team_id = data.get("opponent_team_id")
+        if opponent_team_id not in (None, ""):
+            try:
+                team_id = int(opponent_team_id)
+            except (TypeError, ValueError) as error:
+                raise ValueError("Seleção adversária não encontrada.") from error
+
+            team = db.session.get(Team, team_id)
+            if team is None:
+                raise ValueError("Seleção adversária não encontrada.")
+
+            if team.is_brazil:
+                raise ValueError("Brasil não pode ser selecionado como adversário.")
+
+            if not team.is_active:
+                raise ValueError("A seleção adversária não está ativa.")
+
+            if not team.is_confirmed:
+                raise ValueError("A seleção adversária não está confirmada.")
+
+            return team.name
+
         if not data.get("opponent_team"):
             raise ValueError("opponent_team e obrigatorio.")
 
@@ -181,9 +205,16 @@ class AdminService:
             raise ValueError("opponent_team e obrigatorio.")
 
         if opponent_team.lower() == "brasil":
-            raise ValueError("O adversario nao pode ser Brasil.")
+            raise ValueError("Brasil não pode ser selecionado como adversário.")
 
         return opponent_team
+
+    def _parse_brazil_side(self, data: dict) -> str:
+        brazil_side = str(data.get("brazil_side") or "HOME").strip().upper()
+        if brazil_side not in {"HOME", "AWAY"}:
+            raise ValueError("brazil_side deve ser HOME ou AWAY.")
+
+        return brazil_side
 
     def _parse_starts_at(self, data: dict) -> datetime:
         if not data.get("starts_at"):

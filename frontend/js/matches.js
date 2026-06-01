@@ -20,7 +20,11 @@
   const nextMatchModal = document.querySelector("#next-match-modal");
   const nextMatchForm = document.querySelector("#next-match-form");
   const nextMatchPhase = document.querySelector("#next-match-phase");
-  const nextMatchOpponent = document.querySelector("#next-match-opponent");
+  const nextMatchTeamPicker = document.querySelector("#next-match-team-picker");
+  const selectedOpponentBox = document.querySelector("#selected-opponent-box");
+  const teamFilterInput = document.querySelector("#team-filter-input");
+  const teamPickerList = document.querySelector("#team-picker-list");
+  const nextMatchBrazilSide = document.querySelector("#next-match-brazil-side");
   const nextMatchDate = document.querySelector("#next-match-date");
   const nextMatchTime = document.querySelector("#next-match-time");
   const nextMatchPreview = document.querySelector("#next-match-preview");
@@ -38,6 +42,9 @@
   let currentMatch = null;
   let currentReopenMatch = null;
   let phaseOptions = [];
+  let activeTeams = [];
+  let selectedOpponentTeam = null;
+  let brazilTeam = null;
   let allMatches = [];
   let selectedPhase = "GROUP_STAGE";
 
@@ -47,6 +54,11 @@
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+
+  const normalizeSearchText = (value) => String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase();
 
   const isBrazilMatch = (match) => {
     if (typeof match.is_brazil_match === "boolean") {
@@ -188,6 +200,59 @@
     pageFeedback.classList.toggle("is-success", type === "success");
   };
 
+  const mapNextMatchError = (message) => {
+    const errorMap = {
+      "A seleção adversária não está ativa.": "A seleção adversária não está disponível para seleção.",
+      "A seleção adversária não está confirmada.": "A seleção adversária não está disponível para seleção.",
+      "Brasil não pode ser selecionado como adversário.": "Escolha uma seleção adversária diferente do Brasil.",
+    };
+
+    return errorMap[message] || message;
+  };
+
+  const renderTeamFlag = (team, fallbackName) => {
+    const name = team?.name || fallbackName || "Selecao";
+    const fallback = `<span class="team-flag team-flag-fallback material-symbols-outlined" aria-hidden="true">flag</span>`;
+    if (!team?.flag_url) {
+      return fallback;
+    }
+
+    return `
+      <img class="team-flag team-flag-image" src="${escapeHtml(team.flag_url)}" alt="Bandeira de ${escapeHtml(name)}" data-flag-image>
+      <span class="team-flag team-flag-fallback material-symbols-outlined hidden" aria-hidden="true">flag</span>
+    `;
+  };
+
+  const renderTeamBadge = (team, fallbackName) => {
+    const name = team?.name || fallbackName || "Selecao";
+    return `
+      <span class="team-flag-badge">
+        ${renderTeamFlag(team, name)}
+        <span>${escapeHtml(name)}</span>
+      </span>
+    `;
+  };
+
+  const updateSelectedOpponentBox = () => {
+    if (!selectedOpponentBox) {
+      return;
+    }
+
+    selectedOpponentBox.innerHTML = selectedOpponentTeam
+      ? renderTeamBadge(selectedOpponentTeam)
+      : '<span class="team-picker-placeholder">Selecione o adversario</span>';
+  };
+
+  const openTeamPicker = () => {
+    teamPickerList?.classList.remove("hidden");
+    selectedOpponentBox?.setAttribute("aria-expanded", "true");
+  };
+
+  const closeTeamPicker = () => {
+    teamPickerList?.classList.add("hidden");
+    selectedOpponentBox?.setAttribute("aria-expanded", "false");
+  };
+
   const openResultModal = (match) => {
     currentMatch = match;
     homeTeamLabel.textContent = match.home_team;
@@ -308,6 +373,64 @@
     `;
   };
 
+  const renderTeamOptions = (filterText = "") => {
+    if (!teamPickerList) {
+      return;
+    }
+
+    if (!activeTeams.length) {
+      teamPickerList.innerHTML = '<div class="team-picker-empty">Nenhuma selecao disponivel. Execute o seed de selecoes.</div>';
+      return;
+    }
+
+    const searchTerm = normalizeSearchText(filterText.trim());
+    const filteredTeams = activeTeams.filter((team) => {
+      if (!searchTerm) {
+        return true;
+      }
+
+      return normalizeSearchText(team.name).includes(searchTerm);
+    });
+
+    if (!filteredTeams.length) {
+      teamPickerList.innerHTML = '<div class="team-picker-empty">Nenhuma selecao encontrada.</div>';
+      return;
+    }
+
+    teamPickerList.innerHTML = filteredTeams.map((team) => `
+      <button
+        class="team-option${selectedOpponentTeam?.id === team.id ? " selected" : ""}"
+        type="button"
+        role="option"
+        aria-selected="${selectedOpponentTeam?.id === team.id ? "true" : "false"}"
+        data-team-id="${escapeHtml(team.id)}"
+      >
+        ${renderTeamFlag(team)}
+        <span>${escapeHtml(team.name)}</span>
+      </button>
+    `).join("");
+  };
+
+  const loadTeams = async () => {
+    if (activeTeams.length && brazilTeam) {
+      return;
+    }
+
+    const [activeData, allData] = await Promise.all([
+      window.BolaoApi.activeTeams(),
+      window.BolaoApi.teams(),
+    ]);
+    const responseTeams = Array.isArray(activeData) ? activeData : activeData.items || [];
+    const allTeams = Array.isArray(allData) ? allData : allData.items || [];
+    activeTeams = responseTeams.filter((team) => !team.is_brazil && team.is_active && team.is_confirmed);
+    brazilTeam = allTeams.find((team) => team.is_brazil) || {
+      name: "Brasil",
+      flag_url: "/img/Bandeiras/Brasil.jpg",
+      is_brazil: true,
+    };
+    renderTeamOptions(teamFilterInput?.value || "");
+  };
+
   const buildStartsAt = () => {
     if (!nextMatchDate.value || !nextMatchTime.value) {
       return "";
@@ -319,34 +442,55 @@
   const updateNextMatchPreview = () => {
     const selectedPhase = phaseOptions.find((phase) => phase.value === nextMatchPhase.value);
     const phaseLabel = selectedPhase?.label || "Fase nao selecionada";
-    const opponent = nextMatchOpponent.value.trim() || "Adversario";
-    const title = `Brasil x ${opponent}`;
+    const opponent = selectedOpponentTeam?.name || "Adversario";
+    const brazilSide = nextMatchBrazilSide.value || "HOME";
+    const homeTeam = brazilSide === "AWAY" ? selectedOpponentTeam : brazilTeam;
+    const awayTeam = brazilSide === "AWAY" ? brazilTeam : selectedOpponentTeam;
+    const homeFallback = brazilSide === "AWAY" ? opponent : "Brasil";
+    const awayFallback = brazilSide === "AWAY" ? "Brasil" : opponent;
     const startsAt = buildStartsAt();
     const dateParts = startsAt ? formatDate(startsAt) : { date: "Data nao informada", time: "" };
 
     nextMatchPreview.innerHTML = `
       <strong>Proxima fase: ${escapeHtml(phaseLabel)}</strong>
-      <span>Partida: ${escapeHtml(title)}</span>
+      <span class="preview-match-line">
+        ${renderTeamBadge(homeTeam, homeFallback)}
+        <strong aria-hidden="true">x</strong>
+        ${renderTeamBadge(awayTeam, awayFallback)}
+      </span>
       <span>Data: ${escapeHtml(dateParts.date)}${dateParts.time ? ` as ${escapeHtml(dateParts.time)}` : ""}</span>
     `;
+    updateSelectedOpponentBox();
   };
 
   const openNextMatchModal = async () => {
     setNextMatchFeedback("");
     try {
-      await loadPhases();
+      await Promise.all([loadPhases(), loadTeams()]);
     } catch (error) {
-      setNextMatchFeedback(error.message || "Nao foi possivel carregar as fases.", "error");
+      setNextMatchFeedback(error.message || "Nao foi possivel carregar os dados da partida.", "error");
     }
 
+    selectedOpponentTeam = null;
+    if (teamFilterInput) {
+      teamFilterInput.value = "";
+    }
+    renderTeamOptions();
     updateNextMatchPreview();
     nextMatchModal.showModal();
-    nextMatchPhase.focus();
+    openTeamPicker();
+    teamFilterInput?.focus();
   };
 
   const closeNextMatchModal = () => {
     nextMatchModal.close();
     nextMatchForm.reset();
+    selectedOpponentTeam = null;
+    if (teamFilterInput) {
+      teamFilterInput.value = "";
+    }
+    closeTeamPicker();
+    renderTeamOptions();
     setNextMatchFeedback("");
     updateNextMatchPreview();
   };
@@ -356,10 +500,17 @@
       return null;
     }
 
-    const opponentTeam = nextMatchOpponent.value.trim();
-    if (opponentTeam.toLowerCase() === "brasil") {
-      setNextMatchFeedback("O adversario nao pode ser Brasil.", "error");
-      nextMatchOpponent.focus();
+    if (!selectedOpponentTeam) {
+      setNextMatchFeedback("Selecione o adversario.", "error");
+      openTeamPicker();
+      teamFilterInput?.focus();
+      return null;
+    }
+
+    if (selectedOpponentTeam.is_brazil) {
+      setNextMatchFeedback("Escolha uma selecao adversaria diferente do Brasil.", "error");
+      openTeamPicker();
+      teamFilterInput?.focus();
       return null;
     }
 
@@ -372,8 +523,9 @@
 
     return {
       phase: nextMatchPhase.value,
-      opponent_team: opponentTeam,
+      opponent_team_id: Number(selectedOpponentTeam.id),
       starts_at: startsAt,
+      brazil_side: nextMatchBrazilSide.value,
     };
   };
 
@@ -442,7 +594,7 @@
       setPageFeedback(data.message || "Proxima partida do Brasil criada com sucesso.", "success");
       await loadMatches();
     } catch (error) {
-      setNextMatchFeedback(error.message || "Nao foi possivel criar a partida.", "error");
+      setNextMatchFeedback(mapNextMatchError(error.message || "Nao foi possivel criar a partida."), "error");
     }
   });
 
@@ -460,6 +612,12 @@
 
   nextMatchModal?.addEventListener("cancel", () => {
     nextMatchForm.reset();
+    selectedOpponentTeam = null;
+    if (teamFilterInput) {
+      teamFilterInput.value = "";
+    }
+    closeTeamPicker();
+    renderTeamOptions();
     setNextMatchFeedback("");
     updateNextMatchPreview();
   });
@@ -477,7 +635,62 @@
   });
 
   createMatchButton?.addEventListener("click", openNextMatchModal);
-  [nextMatchPhase, nextMatchOpponent, nextMatchDate, nextMatchTime].forEach((element) => {
+  [nextMatchPreview, selectedOpponentBox, teamPickerList].forEach((container) => {
+    container?.addEventListener("error", (event) => {
+      const image = event.target;
+      if (!image?.matches?.("[data-flag-image]")) {
+        return;
+      }
+
+      image.classList.add("hidden");
+      image.nextElementSibling?.classList.remove("hidden");
+    }, true);
+  });
+
+  selectedOpponentBox?.addEventListener("click", () => {
+    openTeamPicker();
+    teamFilterInput?.focus();
+  });
+
+  teamFilterInput?.addEventListener("focus", () => {
+    renderTeamOptions(teamFilterInput.value);
+    openTeamPicker();
+  });
+
+  teamFilterInput?.addEventListener("input", () => {
+    renderTeamOptions(teamFilterInput.value);
+    openTeamPicker();
+  });
+
+  teamPickerList?.addEventListener("click", (event) => {
+    const option = event.target.closest("[data-team-id]");
+    if (!option) {
+      return;
+    }
+
+    selectedOpponentTeam = activeTeams.find((team) => String(team.id) === option.dataset.teamId) || null;
+    if (!selectedOpponentTeam) {
+      setNextMatchFeedback("Selecao adversaria nao encontrada.", "error");
+      return;
+    }
+
+    if (teamFilterInput) {
+      teamFilterInput.value = "";
+    }
+
+    renderTeamOptions();
+    updateSelectedOpponentBox();
+    updateNextMatchPreview();
+    closeTeamPicker();
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!nextMatchTeamPicker?.contains(event.target)) {
+      closeTeamPicker();
+    }
+  });
+
+  [nextMatchPhase, nextMatchBrazilSide, nextMatchDate, nextMatchTime].forEach((element) => {
     element?.addEventListener("input", updateNextMatchPreview);
     element?.addEventListener("change", updateNextMatchPreview);
   });

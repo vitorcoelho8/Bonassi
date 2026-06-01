@@ -125,9 +125,21 @@
           </select>
         </label>
 
+        <div id="next-match-team-picker" class="team-picker">
+          <span class="team-picker-label">Advers&aacute;rio</span>
+          <button id="selected-opponent-box" class="team-picker-selected" type="button" aria-expanded="false" aria-controls="team-picker-list">
+            <span>Selecione o advers&aacute;rio</span>
+          </button>
+          <input id="team-filter-input" type="text" placeholder="Filtrar sele&ccedil;&otilde;es" autocomplete="off">
+          <div id="team-picker-list" class="team-picker-list hidden" role="listbox"></div>
+        </div>
+
         <label class="field">
-          <span>Advers&aacute;rio</span>
-          <input id="next-match-opponent" name="opponent_team" type="text" placeholder="Digite o adversario do Brasil" autocomplete="off" required>
+          <span>Brasil</span>
+          <select id="next-match-brazil-side" name="brazil_side" required>
+            <option value="HOME">Mandante</option>
+            <option value="AWAY">Visitante</option>
+          </select>
         </label>
 
         <div class="split-fields">

@@ -33,16 +33,19 @@
         <section id="saved-prediction" class="match-summary hidden" aria-live="polite"></section>
         <form id="prediction-form" class="stack-form" novalidate>
           <input id="match-id" name="match_id" type="hidden">
-          <div class="split-fields">
-            <label class="field">
-              <span>Placar do Brasil</span>
-              <input id="brazil-score" name="brazil_score" type="number" min="0" inputmode="numeric" required>
+          <section id="prediction-scoreboard" class="prediction-scoreboard" aria-label="Placar do palpite">
+            <div id="prediction-left-team" class="prediction-team-card"></div>
+            <label id="brazil-score-field" class="prediction-score-field">
+              <span class="hidden">Placar do Brasil</span>
+              <input id="brazil-score" name="brazil_score" type="number" min="0" max="99" inputmode="numeric" required>
             </label>
-            <label class="field">
-              <span>Placar do advers&aacute;rio</span>
-              <input id="opponent-score" name="opponent_score" type="number" min="0" inputmode="numeric" required>
+            <span class="prediction-versus" aria-hidden="true">x</span>
+            <label id="opponent-score-field" class="prediction-score-field">
+              <span class="hidden">Placar do advers&aacute;rio</span>
+              <input id="opponent-score" name="opponent_score" type="number" min="0" max="99" inputmode="numeric" required>
             </label>
-          </div>
+            <div id="prediction-right-team" class="prediction-team-card"></div>
+          </section>
           <p id="prediction-feedback" class="form-feedback" role="status" aria-live="polite"></p>
           <section class="prediction-rules" aria-labelledby="prediction-rules-title">
             <h3 id="prediction-rules-title">

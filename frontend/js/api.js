@@ -59,6 +59,8 @@
     ranking: () => request("/api/ranking/"),
     matches: () => request("/api/matches/"),
     nextMatch: () => request("/api/matches/next"),
+    teams: () => request("/api/teams/"),
+    activeTeams: () => request("/api/teams/active"),
     matchPhases: () => request("/api/admin/matches/phases"),
     createNextBrazilMatch: (payload) => request("/api/admin/matches/next-brazil-match", {
       method: "POST",

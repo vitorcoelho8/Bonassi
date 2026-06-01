@@ -11,6 +11,11 @@
   const matchIdInput = document.querySelector("#match-id");
   const brazilScoreInput = document.querySelector("#brazil-score");
   const opponentScoreInput = document.querySelector("#opponent-score");
+  const predictionScoreboard = document.querySelector("#prediction-scoreboard");
+  const predictionLeftTeam = document.querySelector("#prediction-left-team");
+  const predictionRightTeam = document.querySelector("#prediction-right-team");
+  const brazilScoreField = document.querySelector("#brazil-score-field");
+  const opponentScoreField = document.querySelector("#opponent-score-field");
   const bonusButton = document.querySelector("#bonus-button");
   const bonusNavLink = document.querySelector("#bonus-nav-link");
 
@@ -18,6 +23,12 @@
   let match = null;
   let matchContext = null;
   let savedPrediction = null;
+  let teamsByName = new Map();
+
+  const BRAZIL_TEAM = {
+    name: "Brasil",
+    flag_url: "/img/Bandeiras/Brasil.jpg",
+  };
 
   const escapeHtml = (value) => String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -25,6 +36,12 @@
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&#039;");
+
+  const normalizeTeamName = (value) => String(value ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
 
   const setFeedback = (message, type) => {
     feedback.textContent = message;
@@ -71,6 +88,56 @@
     throw new Error("Este jogo nao e uma partida do Brasil.");
   };
 
+  const getTeamByName = (name) => {
+    if (normalizeTeamName(name) === "brasil") {
+      return teamsByName.get("brasil") || BRAZIL_TEAM;
+    }
+
+    return teamsByName.get(normalizeTeamName(name)) || { name };
+  };
+
+  const renderTeamFlag = (team, fallbackName) => {
+    const name = team?.name || fallbackName || "Selecao";
+    if (!team?.flag_url) {
+      return '<span class="prediction-flag-fallback material-symbols-outlined" aria-hidden="true">flag</span>';
+    }
+
+    return `
+      <img class="prediction-team-flag" src="${escapeHtml(team.flag_url)}" alt="Bandeira de ${escapeHtml(name)}" data-prediction-flag>
+      <span class="prediction-flag-fallback material-symbols-outlined hidden" aria-hidden="true">flag</span>
+    `;
+  };
+
+  const renderTeamCard = (team, fallbackName) => {
+    const name = team?.name || fallbackName || "Selecao";
+    return `
+      ${renderTeamFlag(team, name)}
+      <span>${escapeHtml(name)}</span>
+    `;
+  };
+
+  const renderPredictionScoreboard = () => {
+    if (!matchContext || !predictionScoreboard) {
+      return;
+    }
+
+    const brazilTeam = getTeamByName("Brasil");
+    const opponentTeam = getTeamByName(matchContext.opponentTeam);
+    const leftTeam = matchContext.brazilIsHome ? brazilTeam : opponentTeam;
+    const rightTeam = matchContext.brazilIsHome ? opponentTeam : brazilTeam;
+
+    predictionLeftTeam.innerHTML = renderTeamCard(leftTeam, matchContext.brazilIsHome ? "Brasil" : matchContext.opponentTeam);
+    predictionRightTeam.innerHTML = renderTeamCard(rightTeam, matchContext.brazilIsHome ? matchContext.opponentTeam : "Brasil");
+
+    if (matchContext.brazilIsHome) {
+      predictionScoreboard.insertBefore(brazilScoreField, predictionScoreboard.querySelector(".prediction-versus"));
+      predictionScoreboard.insertBefore(opponentScoreField, predictionRightTeam);
+    } else {
+      predictionScoreboard.insertBefore(opponentScoreField, predictionScoreboard.querySelector(".prediction-versus"));
+      predictionScoreboard.insertBefore(brazilScoreField, predictionRightTeam);
+    }
+  };
+
   const getPredictionBrazilScore = (prediction, context) => {
     if (prediction.brazil_score !== undefined && prediction.brazil_score !== null) {
       return prediction.brazil_score;
@@ -101,6 +168,18 @@
       <span>Brasil ${escapeHtml(brazilScore)} x ${escapeHtml(opponentScore)} ${escapeHtml(matchContext.opponentTeam)}</span>
     `;
     savedPredictionPanel.classList.remove("hidden");
+  };
+
+  const loadTeams = async () => {
+    try {
+      const data = await window.BolaoApi.teams();
+      const teams = Array.isArray(data) ? data : data.items || [];
+      teamsByName = new Map(
+        teams.map((team) => [normalizeTeamName(team.name), team]),
+      );
+    } catch (error) {
+      teamsByName = new Map([["brasil", BRAZIL_TEAM]]);
+    }
   };
 
   const loadSavedPrediction = async () => {
@@ -141,7 +220,17 @@
       return null;
     }
 
+    if (score > 99) {
+      setFeedback("O placar deve ter no maximo 2 digitos.", "error");
+      input.focus();
+      return null;
+    }
+
     return score;
+  };
+
+  const limitScoreDigits = (input) => {
+    input.value = input.value.replace(/\D/g, "").slice(0, 2);
   };
 
   if (!participantId) {
@@ -156,6 +245,20 @@
   if (bonusNavLink) {
     bonusNavLink.href = `bonus.html?participant_id=${encodeURIComponent(participantId)}`;
   }
+
+  [brazilScoreInput, opponentScoreInput].forEach((input) => {
+    input?.addEventListener("input", () => limitScoreDigits(input));
+  });
+
+  predictionScoreboard?.addEventListener("error", (event) => {
+    const image = event.target;
+    if (!image?.matches?.("[data-prediction-flag]")) {
+      return;
+    }
+
+    image.classList.add("hidden");
+    image.nextElementSibling?.classList.remove("hidden");
+  }, true);
 
   predictionForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -211,12 +314,16 @@
     }
 
     try {
-      const matchData = await window.BolaoApi.nextMatch();
+      const [matchData] = await Promise.all([
+        window.BolaoApi.nextMatch(),
+        loadTeams(),
+      ]);
       match = matchData.item;
       matchContext = getBrazilMatchContext(match);
       matchIdInput.value = match.id;
+      renderPredictionScoreboard();
       nextMatch.innerHTML = `
-        <strong>Brasil x ${escapeHtml(matchContext.opponentTeam)}</strong>
+        <strong>${escapeHtml(match.home_team)} x ${escapeHtml(match.away_team)}</strong>
         <span>${escapeHtml(formatDate(match.match_date || match.starts_at))}</span>
       `;
       await loadSavedPrediction();
