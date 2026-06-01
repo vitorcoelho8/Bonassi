@@ -6,14 +6,14 @@ from app.participants.models import Participant
 BONUS_DESCRIPTIONS = {
     "FOLLOW_BONASSI": "Seguir a Bonassi",
     "STORY_MENTION": "Story marcando a clinica",
-    "INSTAGRAM_REVIEW": "Avaliar/interagir com a Bonassi no Instagram",
+    "GOOGLE_REVIEW": "Avaliar/interagir com a Bonassi no Google",
     "REFERRAL": "Indicar alguem para fazer parte do time de pacientes",
 }
 
 BONUS_POINTS = {
     "FOLLOW_BONASSI": 4,
     "STORY_MENTION": 4,
-    "INSTAGRAM_REVIEW": 2,
+    "GOOGLE_REVIEW": 2,
     "REFERRAL": 6,
 }
 

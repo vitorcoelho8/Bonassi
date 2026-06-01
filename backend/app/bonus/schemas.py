@@ -6,7 +6,7 @@ class BonusAnswerSchema:
     allowed_bonus_types = {
         "FOLLOW_BONASSI",
         "STORY_MENTION",
-        "INSTAGRAM_REVIEW",
+        "GOOGLE_REVIEW",
         "REFERRAL",
     }
 
