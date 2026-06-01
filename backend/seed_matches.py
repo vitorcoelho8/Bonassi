@@ -15,6 +15,7 @@ load_dotenv(BACKEND_DIR / ".env")
 from app.database import db
 from app.main import create_app
 from app.matches.models import Match
+from app.matches.phases import DEFAULT_MATCH_PHASE, phase_round_order
 
 
 SAO_PAULO_TZ = ZoneInfo("America/Sao_Paulo")
@@ -60,7 +61,13 @@ def seed_matches() -> None:
     print("Inserindo jogos da primeira fase...")
 
     for match_data in MATCHES:
-        if find_existing_match(match_data):
+        existing_match = find_existing_match(match_data)
+        if existing_match:
+            existing_match.phase = existing_match.phase or DEFAULT_MATCH_PHASE
+            existing_match.round_order = existing_match.round_order or phase_round_order(DEFAULT_MATCH_PHASE)
+            existing_match.is_brazil_match = True
+            existing_match.is_knockout = False
+            existing_match.created_manually_by_admin = False
             print(f"[=] Jogo já existe: {match_data['home_team']} x {match_data['away_team']}")
             continue
 
@@ -71,6 +78,11 @@ def seed_matches() -> None:
                 starts_at=match_data["starts_at"],
                 status="SCHEDULED",
                 is_active=True,
+                phase=DEFAULT_MATCH_PHASE,
+                round_order=phase_round_order(DEFAULT_MATCH_PHASE),
+                is_brazil_match=True,
+                is_knockout=False,
+                created_manually_by_admin=False,
             )
         )
         print(f"[+] Criado: {format_match(match_data)}")
