@@ -43,6 +43,7 @@
   let currentReopenMatch = null;
   let phaseOptions = [];
   let activeTeams = [];
+  let teamsByName = new Map();
   let selectedOpponentTeam = null;
   let brazilTeam = null;
   let allMatches = [];
@@ -59,6 +60,28 @@
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "")
     .toLowerCase();
+
+  const getTeamByName = (name) => teamsByName.get(normalizeSearchText(name).trim());
+
+  const indexTeamsByName = (teams) => {
+    teamsByName = new Map();
+    teams.forEach((team) => {
+      teamsByName.set(normalizeSearchText(team.name).trim(), team);
+      if (team.normalized_name) {
+        teamsByName.set(normalizeSearchText(team.normalized_name).trim(), team);
+      }
+    });
+  };
+
+  const withMatchFlags = (match) => {
+    const homeTeam = getTeamByName(match.home_team);
+    const awayTeam = getTeamByName(match.away_team);
+    return {
+      ...match,
+      home_flag_url: match.home_flag_url || homeTeam?.flag_url || null,
+      away_flag_url: match.away_flag_url || awayTeam?.flag_url || null,
+    };
+  };
 
   const isBrazilMatch = (match) => {
     if (typeof match.is_brazil_match === "boolean") {
@@ -102,12 +125,66 @@
     return labels[normalizedStatus] || normalizedStatus || "INDEFINIDO";
   };
 
+  const statusClass = (status) => {
+    const normalizedStatus = String(status || "").toUpperCase();
+    if (normalizedStatus === "FINISHED") {
+      return "is-finished";
+    }
+
+    if (normalizedStatus === "CANCELLED") {
+      return "is-cancelled";
+    }
+
+    if (normalizedStatus === "TO_BE_DEFINED") {
+      return "is-tbd";
+    }
+
+    return "is-scheduled";
+  };
+
   const hasResult = (match) => match.home_score !== null
     && match.home_score !== undefined
     && match.away_score !== null
     && match.away_score !== undefined;
 
   const isFinished = (match) => String(match.status || "").toUpperCase() === "FINISHED";
+
+  const renderMatchTeamFlag = (flagUrl, teamName) => {
+    const initial = String(teamName || "?").trim().charAt(0).toUpperCase() || "?";
+    if (!flagUrl) {
+      return `<span class="match-team-flag-fallback" aria-hidden="true">${escapeHtml(initial)}</span>`;
+    }
+
+    return `
+      <img class="match-team-flag" src="${escapeHtml(flagUrl)}" alt="Bandeira de ${escapeHtml(teamName)}" data-flag-image>
+      <span class="match-team-flag-fallback hidden" aria-hidden="true">${escapeHtml(initial)}</span>
+    `;
+  };
+
+  const renderMatchTeam = (name, flagUrl, side) => `
+    <div class="match-team match-team-${escapeHtml(side)}">
+      ${renderMatchTeamFlag(flagUrl, name)}
+      <strong class="match-team-name">${escapeHtml(name)}</strong>
+    </div>
+  `;
+
+  const renderMatchScore = (match) => {
+    if (isFinished(match) && hasResult(match)) {
+      return `
+        <div class="match-score-block">
+          <strong class="match-score">${escapeHtml(match.home_score)} - ${escapeHtml(match.away_score)}</strong>
+          <span class="match-score-label">PLACAR</span>
+        </div>
+      `;
+    }
+
+    return `
+      <div class="match-score-block">
+        <strong class="match-score">VS</strong>
+        <span class="match-score-label">PREVISTO</span>
+      </div>
+    `;
+  };
 
   const formatMatchTitle = (match) => {
     if (!isFinished(match) || !hasResult(match)) {
@@ -294,11 +371,11 @@
 
     matchesList.innerHTML = matches.map((match) => {
       const dateParts = formatDate(match.match_date || match.starts_at);
-      const matchTitle = formatMatchTitle(match);
       const phaseLabel = match.phase_label || match.phase || "Fase nao informada";
+      const statusLabel = formatStatus(match.status);
       const reopenButton = isFinished(match)
         ? `
-          <button class="danger-button result-button reopen-match-button" type="button" data-reopen-match-id="${escapeHtml(match.id)}">
+          <button class="danger-button result-button match-action-button reopen-match-button" type="button" data-reopen-match-id="${escapeHtml(match.id)}">
             <span class="material-symbols-outlined" aria-hidden="true">restart_alt</span>
             <span>Reabrir</span>
           </button>
@@ -306,18 +383,26 @@
         : "";
 
       return `
-        <article class="match-row">
-          <div class="match-teams">
-            <strong>${escapeHtml(matchTitle)}</strong>
+        <article class="match-card">
+          <div class="match-card-top">
+            <span class="match-phase-badge">${escapeHtml(phaseLabel)}</span>
+            <span class="match-status-badge ${statusClass(match.status)}">${escapeHtml(statusLabel)}</span>
           </div>
-          <span class="match-phase">${escapeHtml(phaseLabel)}</span>
-          <time datetime="${escapeHtml(match.starts_at || "")}">
-            <span>${escapeHtml(dateParts.date)}</span>
-            ${dateParts.time ? `<span>${escapeHtml(dateParts.time)}</span>` : ""}
+
+          <time class="match-card-date" datetime="${escapeHtml(match.starts_at || "")}">
+            <span class="material-symbols-outlined" aria-hidden="true">calendar_month</span>
+            <span class="match-date-text">${escapeHtml(dateParts.date)}${dateParts.time ? ` &bull; ${escapeHtml(dateParts.time)}` : ""}</span>
+            <span>${escapeHtml(dateParts.date)}${dateParts.time ? ` • ${escapeHtml(dateParts.time)}` : ""}</span>
           </time>
-          <span class="status-chip">${escapeHtml(formatStatus(match.status))}</span>
-          <div class="match-actions">
-            <button class="secondary-button result-button" type="button" data-match-id="${escapeHtml(match.id)}">
+
+          <div class="match-card-main">
+            ${renderMatchTeam(match.home_team, match.home_flag_url, "left")}
+            ${renderMatchScore(match)}
+            ${renderMatchTeam(match.away_team, match.away_flag_url, "right")}
+          </div>
+
+          <div class="match-card-actions">
+            <button class="secondary-button result-button match-action-button" type="button" data-match-id="${escapeHtml(match.id)}">
               <span class="material-symbols-outlined" aria-hidden="true">scoreboard</span>
               <span>Resultado</span>
             </button>
@@ -348,8 +433,13 @@
 
   const loadMatches = async () => {
     try {
-      const data = await window.BolaoApi.matches();
-      allMatches = (data.items || []).filter(isBrazilMatch).sort(compareMatches);
+      const [matchesData, teamsData] = await Promise.all([
+        window.BolaoApi.matches(),
+        window.BolaoApi.teams(),
+      ]);
+      const teams = Array.isArray(teamsData) ? teamsData : teamsData.items || [];
+      indexTeamsByName(teams);
+      allMatches = (matchesData.items || []).filter(isBrazilMatch).map(withMatchFlags).sort(compareMatches);
       renderPhaseButtons();
       renderMatches();
     } catch (error) {
@@ -422,6 +512,7 @@
     ]);
     const responseTeams = Array.isArray(activeData) ? activeData : activeData.items || [];
     const allTeams = Array.isArray(allData) ? allData : allData.items || [];
+    indexTeamsByName(allTeams);
     activeTeams = responseTeams.filter((team) => !team.is_brazil && team.is_active && team.is_confirmed);
     brazilTeam = allTeams.find((team) => team.is_brazil) || {
       name: "Brasil",
@@ -635,7 +726,7 @@
   });
 
   createMatchButton?.addEventListener("click", openNextMatchModal);
-  [nextMatchPreview, selectedOpponentBox, teamPickerList].forEach((container) => {
+  [matchesList, nextMatchPreview, selectedOpponentBox, teamPickerList].forEach((container) => {
     container?.addEventListener("error", (event) => {
       const image = event.target;
       if (!image?.matches?.("[data-flag-image]")) {

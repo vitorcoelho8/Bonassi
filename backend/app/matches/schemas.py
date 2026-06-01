@@ -1,6 +1,8 @@
 from datetime import datetime
+from unicodedata import combining, normalize
 
 from app.matches.phases import is_knockout_phase, normalize_phase, phase_round_order
+from app.teams.models import Team
 
 
 class MatchSchema:
@@ -32,10 +34,16 @@ class MatchSchema:
         }
 
     def dump(self, match) -> dict:
-        return match.to_dict()
+        teams = self._teams_by_name([match.home_team, match.away_team])
+        return self._dump_with_teams(match, teams)
 
     def dump_many(self, matches) -> list[dict]:
-        return [self.dump(match) for match in matches]
+        names = []
+        for match in matches:
+            names.extend([match.home_team, match.away_team])
+
+        teams = self._teams_by_name(names)
+        return [self._dump_with_teams(match, teams) for match in matches]
 
     def _parse_datetime(self, value):
         if not value:
@@ -96,3 +104,28 @@ class MatchSchema:
 
     def _has_brazil(self, home_team: str, away_team: str) -> bool:
         return "brasil" in {home_team.strip().lower(), away_team.strip().lower()}
+
+    def _dump_with_teams(self, match, teams: dict[str, Team]) -> dict:
+        data = match.to_dict()
+        home_team = teams.get(self._normalize_team_name(match.home_team))
+        away_team = teams.get(self._normalize_team_name(match.away_team))
+        data["home_flag_url"] = home_team.flag_url if home_team else None
+        data["away_flag_url"] = away_team.flag_url if away_team else None
+        return data
+
+    def _teams_by_name(self, names: list[str]) -> dict[str, Team]:
+        normalized_names = {self._normalize_team_name(name) for name in names if name}
+        if not normalized_names:
+            return {}
+
+        teams = Team.query.all()
+        return {
+            self._normalize_team_name(team.name): team
+            for team in teams
+            if self._normalize_team_name(team.name) in normalized_names
+            or self._normalize_team_name(team.normalized_name) in normalized_names
+        }
+
+    def _normalize_team_name(self, value: str | None) -> str:
+        text = normalize("NFD", str(value or "").strip().lower())
+        return "".join(char for char in text if not combining(char))
