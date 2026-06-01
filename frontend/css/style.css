@@ -444,6 +444,37 @@ a {
   padding: 0 18px;
 }
 
+.phase-filters {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+
+.phase-filter-button {
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1px solid var(--surface-variant);
+  border-radius: 999px;
+  color: var(--primary);
+  background: var(--surface);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.phase-filter-button:hover,
+.phase-filter-button:focus {
+  border-color: var(--primary-container);
+  box-shadow: 0 0 0 3px rgba(93, 55, 129, 0.12);
+}
+
+.phase-filter-button.active {
+  border-color: var(--primary);
+  color: var(--surface);
+  background: var(--primary);
+  box-shadow: 0 8px 18px rgba(69, 31, 105, 0.22);
+}
+
 .matches-header,
 .match-row {
   display: grid;
@@ -1177,6 +1208,15 @@ a {
 
   .add-match-button {
     width: 100%;
+  }
+
+  .phase-filters {
+    justify-content: flex-start;
+  }
+
+  .phase-filter-button {
+    flex: 1 1 calc(50% - 8px);
+    padding: 0 12px;
   }
 
   .next-match-side {

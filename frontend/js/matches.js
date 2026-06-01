@@ -2,6 +2,7 @@
   const matchesList = document.querySelector("#matches-list");
   const pageFeedback = document.querySelector("#matches-feedback");
   const createMatchButton = document.querySelector("#create-brazil-match-button");
+  const phaseFilters = document.querySelector("#phase-filters");
 
   const resultModal = document.querySelector("#result-modal");
   const resultForm = document.querySelector("#result-form");
@@ -20,8 +21,19 @@
   const nextMatchPreview = document.querySelector("#next-match-preview");
   const nextMatchFeedback = document.querySelector("#next-match-feedback");
 
+  const PHASES = [
+    { value: "GROUP_STAGE", label: "Fase de grupos", round_order: 1 },
+    { value: "ROUND_OF_32", label: "Segunda fase", round_order: 2 },
+    { value: "ROUND_OF_16", label: "Oitavas de final", round_order: 3 },
+    { value: "QUARTER_FINAL", label: "Quartas de final", round_order: 4 },
+    { value: "SEMI_FINAL", label: "Semifinal", round_order: 5 },
+    { value: "FINAL", label: "Final", round_order: 6 },
+  ];
+
   let currentMatch = null;
   let phaseOptions = [];
+  let allMatches = [];
+  let selectedPhase = "GROUP_STAGE";
 
   const escapeHtml = (value) => String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -85,6 +97,65 @@
     return `${match.home_team} ${match.home_score} x ${match.away_score} ${match.away_team}`;
   };
 
+  const compareMatches = (a, b) => {
+    const aRoundOrder = a.round_order || 0;
+    const bRoundOrder = b.round_order || 0;
+    if (aRoundOrder !== bRoundOrder) {
+      return aRoundOrder - bRoundOrder;
+    }
+
+    const aStartsAt = new Date(a.starts_at || a.match_date || 0).getTime();
+    const bStartsAt = new Date(b.starts_at || b.match_date || 0).getTime();
+    return (Number.isNaN(aStartsAt) ? 0 : aStartsAt) - (Number.isNaN(bStartsAt) ? 0 : bStartsAt);
+  };
+
+  const getAvailablePhases = () => {
+    const phasesByValue = new Map(PHASES.map((phase) => [phase.value, phase]));
+
+    allMatches.forEach((match) => {
+      if (!match.phase || phasesByValue.has(match.phase)) {
+        return;
+      }
+
+      phasesByValue.set(match.phase, {
+        value: match.phase,
+        label: match.phase_label || match.phase,
+        round_order: match.round_order || 99,
+      });
+    });
+
+    return Array.from(phasesByValue.values()).sort((a, b) => {
+      return (a.round_order || 0) - (b.round_order || 0);
+    });
+  };
+
+  const getFilteredMatches = () => allMatches.filter((match) => match.phase === selectedPhase);
+
+  const renderPhaseButtons = () => {
+    if (!phaseFilters) {
+      return;
+    }
+
+    phaseFilters.innerHTML = getAvailablePhases().map((phase) => `
+      <button
+        class="phase-filter-button${phase.value === selectedPhase ? " active" : ""}"
+        type="button"
+        data-phase="${escapeHtml(phase.value)}"
+        aria-pressed="${phase.value === selectedPhase ? "true" : "false"}"
+      >
+        ${escapeHtml(phase.label)}
+      </button>
+    `).join("");
+
+    phaseFilters.querySelectorAll("[data-phase]").forEach((button) => {
+      button.addEventListener("click", () => {
+        selectedPhase = button.dataset.phase || "GROUP_STAGE";
+        renderPhaseButtons();
+        renderMatches();
+      });
+    });
+  };
+
   const setResultFeedback = (message, type = "") => {
     resultFeedback.textContent = message;
     resultFeedback.classList.toggle("is-error", type === "error");
@@ -121,9 +192,10 @@
     setResultFeedback("");
   };
 
-  const renderMatches = (matches) => {
+  const renderMatches = () => {
+    const matches = getFilteredMatches();
     if (!matches.length) {
-      matchesList.innerHTML = '<p class="users-empty">Nenhum jogo do Brasil cadastrado.</p>';
+      matchesList.innerHTML = '<p class="users-empty">Nenhuma partida cadastrada para esta fase.</p>';
       return;
     }
 
@@ -164,8 +236,9 @@
   const loadMatches = async () => {
     try {
       const data = await window.BolaoApi.matches();
-      const brazilMatches = (data.items || []).filter(isBrazilMatch);
-      renderMatches(brazilMatches);
+      allMatches = (data.items || []).filter(isBrazilMatch).sort(compareMatches);
+      renderPhaseButtons();
+      renderMatches();
     } catch (error) {
       setPageFeedback("");
       matchesList.innerHTML = `<p class="users-empty">${escapeHtml(error.message || "Nao foi possivel carregar os jogos.")}</p>`;
@@ -308,6 +381,7 @@
     try {
       const data = await window.BolaoApi.createNextBrazilMatch(payload);
       closeNextMatchModal();
+      selectedPhase = payload.phase;
       setPageFeedback(data.message || "Proxima partida do Brasil criada com sucesso.", "success");
       await loadMatches();
     } catch (error) {
