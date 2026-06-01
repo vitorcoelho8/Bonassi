@@ -1,0 +1,45 @@
+services:
+  backend:
+    image: localhost/bonassi_backend:latest
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    container_name: bonassi_backend
+    env_file:
+      - backend/.env
+    environment:
+      FRONTEND_DIR: /app/frontend
+    ports:
+      - "${APP_PORT:-5001}:5001"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./backend:/app/backend
+      - ./frontend:/app/frontend
+    networks:
+      - bonassi_network
+
+  db:
+    image: postgres:16-alpine
+    container_name: bonassi_db
+    env_file:
+      - backend/.env
+    ports:
+      - "${POSTGRES_PORT:-5434}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-postgres} -d $${POSTGRES_DB:-bonassi_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - bonassi_network
+
+volumes:
+  postgres_data:
+
+networks:
+  bonassi_network:
+    driver: bridge

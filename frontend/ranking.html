@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Bolao Hexa 2026 - Ranking</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=Manrope:wght@500;600;700&amp;display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/api.js" defer></script>
+    <script src="js/ranking.js" defer></script>
+  </head>
+  <body class="app-page">
+    <header class="app-topbar">
+      <div class="brand-lockup">
+        <img class="profile-avatar" src="img/bonassi-logo.svg" alt="Bonassi">
+        <details class="hamburger-menu">
+          <summary aria-label="Abrir menu">
+            <span></span>
+            <span></span>
+            <span></span>
+          </summary>
+          <nav aria-label="Menu principal">
+            <a href="usuarios.html">Painel adm</a>
+          </nav>
+        </details>
+        <h1>Bolao Hexa 2026</h1>
+      </div>
+      <span id="user-score" class="score-pill">0 pts</span>
+    </header>
+
+    <main class="app-content" aria-labelledby="ranking-title">
+      <section class="page-heading">
+        <h2 id="ranking-title">Ranking Global</h2>
+        <p>Veja quem esta liderando as apostas.</p>
+      </section>
+
+      <section id="podium" class="podium" aria-label="Top 3 jogadores"></section>
+
+      <section class="leaderboard" aria-label="Classificacao">
+        <div class="leaderboard-header">
+          <span>Pos</span>
+          <span>Jogador</span>
+          <span>Exatos</span>
+          <span>Pontos</span>
+        </div>
+        <div id="ranking-list"></div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navegacao principal">
+      <a href="/matches" class="nav-item">
+        <span class="material-symbols-outlined nav-icon" aria-hidden="true">sports_soccer</span>
+        <span>Jogos</span>
+      </a>
+      <a href="ranking.html" class="nav-item active" aria-current="page">
+        <span class="material-symbols-outlined nav-icon filled" aria-hidden="true">leaderboard</span>
+        <span>Ranking</span>
+      </a>
+      <a href="bonus.html" class="nav-item">
+        <span class="material-symbols-outlined nav-icon" aria-hidden="true">workspace_premium</span>
+        <span>Bonus</span>
+      </a>
+      <a href="usuarios.html" class="nav-item">
+        <span class="material-symbols-outlined nav-icon" aria-hidden="true">group</span>
+        <span>Usuarios</span>
+      </a>
+    </nav>
+  </body>
+</html>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <title>Bolao Hexa 2026 - Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700&amp;family=Manrope:wght@500;600;700&amp;display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <script src="js/api.js" defer></script>
+    <script src="js/login.js" defer></script>
+  </head>
+  <body class="auth-page">
+    <main class="auth-shell" aria-labelledby="login-title">
+      <header class="auth-header">
+        <img class="auth-logo" src="img/bonassi-logo.svg" alt="Bonassi Odontologia Integrada" width="216" height="196">
+        <h1 id="login-title">Bolao Hexa 2026</h1>
+        <p>Aposte nos jogos do Brasil e desafie seus amigos.</p>
+      </header>
+
+      <section class="auth-card" aria-label="Formulario de login">
+        <form id="login-form" class="stack-form" novalidate>
+          <label class="field">
+            <span>Email</span>
+            <input name="email" type="email" autocomplete="email" required>
+          </label>
+
+          <label class="field">
+            <span>Senha</span>
+            <input name="password" type="password" autocomplete="current-password" required>
+          </label>
+
+          <p id="login-feedback" class="form-feedback" role="status" aria-live="polite"></p>
+
+          <button class="primary-button" type="submit">Entrar</button>
+        </form>
+      </section>
+    </main>
+  </body>
+</html>
