@@ -67,6 +67,13 @@
       method: "POST",
       body: JSON.stringify(payload),
     }),
+    updateMatch: (matchId, payload) => request(`/api/admin/matches/${encodeURIComponent(matchId)}`, {
+      method: "PUT",
+      body: JSON.stringify(payload),
+    }),
+    deleteMatch: (matchId) => request(`/api/admin/matches/${encodeURIComponent(matchId)}`, {
+      method: "DELETE",
+    }),
     saveMatchResult: (matchId, payload) => request(`/api/admin/matches/${encodeURIComponent(matchId)}/result`, {
       method: "PUT",
       body: JSON.stringify(payload),

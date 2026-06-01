@@ -19,6 +19,8 @@
 
   const nextMatchModal = document.querySelector("#next-match-modal");
   const nextMatchForm = document.querySelector("#next-match-form");
+  const nextMatchModalTitle = document.querySelector("#next-match-modal-title");
+  const nextMatchSubmitButton = document.querySelector("#next-match-submit-button");
   const nextMatchPhase = document.querySelector("#next-match-phase");
   const nextMatchTeamPicker = document.querySelector("#next-match-team-picker");
   const selectedOpponentBox = document.querySelector("#selected-opponent-box");
@@ -29,6 +31,11 @@
   const nextMatchTime = document.querySelector("#next-match-time");
   const nextMatchPreview = document.querySelector("#next-match-preview");
   const nextMatchFeedback = document.querySelector("#next-match-feedback");
+
+  const deleteMatchModal = document.querySelector("#delete-match-modal");
+  const deleteMatchForm = document.querySelector("#delete-match-form");
+  const deleteMatchFeedback = document.querySelector("#delete-match-feedback");
+  const deleteMatchTitle = document.querySelector("#delete-match-title");
 
   const PHASES = [
     { value: "GROUP_STAGE", label: "Fase de grupos", round_order: 1 },
@@ -41,6 +48,8 @@
 
   let currentMatch = null;
   let currentReopenMatch = null;
+  let currentEditMatch = null;
+  let currentDeleteMatch = null;
   let phaseOptions = [];
   let activeTeams = [];
   let teamsByName = new Map();
@@ -48,6 +57,7 @@
   let brazilTeam = null;
   let allMatches = [];
   let selectedPhase = "GROUP_STAGE";
+  let nextMatchMode = "create";
 
   const escapeHtml = (value) => String(value ?? "")
     .replaceAll("&", "&amp;")
@@ -112,6 +122,32 @@
     };
   };
 
+  const formatInputDateTime = (value) => {
+    if (!value) {
+      return { date: "", time: "" };
+    }
+
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return { date: "", time: "" };
+    }
+
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+      timeZone: "America/Sao_Paulo",
+    }).formatToParts(date);
+    const byType = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+    return {
+      date: `${byType.year}-${byType.month}-${byType.day}`,
+      time: `${byType.hour}:${byType.minute}`,
+    };
+  };
+
   const formatStatus = (status) => {
     const normalizedStatus = String(status || "").toUpperCase();
     const labels = {
@@ -148,6 +184,8 @@
     && match.away_score !== undefined;
 
   const isFinished = (match) => String(match.status || "").toUpperCase() === "FINISHED";
+  const isScheduled = (match) => String(match.status || "").toUpperCase() === "SCHEDULED";
+  const isCancelled = (match) => String(match.status || "").toUpperCase() === "CANCELLED";
 
   const renderMatchTeamFlag = (flagUrl, teamName) => {
     const initial = String(teamName || "?").trim().charAt(0).toUpperCase() || "?";
@@ -271,6 +309,12 @@
     nextMatchFeedback.classList.toggle("is-success", type === "success");
   };
 
+  const setDeleteMatchFeedback = (message, type = "") => {
+    deleteMatchFeedback.textContent = message;
+    deleteMatchFeedback.classList.toggle("is-error", type === "error");
+    deleteMatchFeedback.classList.toggle("is-success", type === "success");
+  };
+
   const setPageFeedback = (message, type = "") => {
     pageFeedback.textContent = message;
     pageFeedback.classList.toggle("is-error", type === "error");
@@ -362,6 +406,47 @@
     setReopenMatchFeedback("");
   };
 
+  const openDeleteMatchModal = (match) => {
+    currentDeleteMatch = match;
+    deleteMatchTitle.textContent = formatMatchTitle(match);
+    setDeleteMatchFeedback("");
+    deleteMatchModal.showModal();
+  };
+
+  const closeDeleteMatchModal = () => {
+    deleteMatchModal.close();
+    currentDeleteMatch = null;
+    deleteMatchForm.reset();
+    setDeleteMatchFeedback("");
+  };
+
+  const reopenFromEditPreview = async () => {
+    if (!currentEditMatch || !isFinished(currentEditMatch)) {
+      return;
+    }
+
+    setNextMatchFeedback("Reabrindo partida...");
+
+    try {
+      const data = await window.BolaoApi.reopenMatch(currentEditMatch.id);
+      closeNextMatchModal();
+      setPageFeedback(data.message || "Partida reaberta com sucesso.", "success");
+      await loadMatches();
+    } catch (error) {
+      setNextMatchFeedback(error.message || "Nao foi possivel reabrir a partida.", "error");
+    }
+  };
+
+  const deleteFromEditPreview = () => {
+    if (!currentEditMatch) {
+      return;
+    }
+
+    const match = currentEditMatch;
+    closeNextMatchModal();
+    openDeleteMatchModal(match);
+  };
+
   const renderMatches = () => {
     const matches = getFilteredMatches();
     if (!matches.length) {
@@ -373,17 +458,25 @@
       const dateParts = formatDate(match.match_date || match.starts_at);
       const phaseLabel = match.phase_label || match.phase || "Fase nao informada";
       const statusLabel = formatStatus(match.status);
-      const reopenButton = isFinished(match)
+      const resultButton = !isCancelled(match)
         ? `
-          <button class="danger-button result-button match-action-button reopen-match-button" type="button" data-reopen-match-id="${escapeHtml(match.id)}">
-            <span class="material-symbols-outlined" aria-hidden="true">restart_alt</span>
-            <span>Reabrir</span>
+          <button class="secondary-button result-button match-action-button" type="button" data-match-id="${escapeHtml(match.id)}">
+            <span class="material-symbols-outlined" aria-hidden="true">scoreboard</span>
+            <span>Resultado</span>
+          </button>
+        `
+        : "";
+      const editButton = !isCancelled(match)
+        ? `
+          <button class="secondary-button result-button match-action-button match-edit-button" type="button" data-edit-match-id="${escapeHtml(match.id)}">
+            <span class="material-symbols-outlined" aria-hidden="true">edit</span>
+            <span>Editar</span>
           </button>
         `
         : "";
 
       return `
-        <article class="match-card">
+        <article class="match-card${isCancelled(match) ? " match-cancelled" : ""}">
           <div class="match-card-top">
             <span class="match-phase-badge">${escapeHtml(phaseLabel)}</span>
             <span class="match-status-badge ${statusClass(match.status)}">${escapeHtml(statusLabel)}</span>
@@ -392,7 +485,6 @@
           <time class="match-card-date" datetime="${escapeHtml(match.starts_at || "")}">
             <span class="material-symbols-outlined" aria-hidden="true">calendar_month</span>
             <span class="match-date-text">${escapeHtml(dateParts.date)}${dateParts.time ? ` &bull; ${escapeHtml(dateParts.time)}` : ""}</span>
-            <span>${escapeHtml(dateParts.date)}${dateParts.time ? ` • ${escapeHtml(dateParts.time)}` : ""}</span>
           </time>
 
           <div class="match-card-main">
@@ -402,11 +494,8 @@
           </div>
 
           <div class="match-card-actions">
-            <button class="secondary-button result-button match-action-button" type="button" data-match-id="${escapeHtml(match.id)}">
-              <span class="material-symbols-outlined" aria-hidden="true">scoreboard</span>
-              <span>Resultado</span>
-            </button>
-            ${reopenButton}
+            ${resultButton}
+            ${editButton}
           </div>
         </article>
       `;
@@ -421,14 +510,15 @@
       });
     });
 
-    matchesList.querySelectorAll("[data-reopen-match-id]").forEach((button) => {
+    matchesList.querySelectorAll("[data-edit-match-id]").forEach((button) => {
       button.addEventListener("click", () => {
-        const match = matches.find((item) => item.id === button.dataset.reopenMatchId);
+        const match = matches.find((item) => item.id === button.dataset.editMatchId);
         if (match) {
-          openReopenMatchModal(match);
+          openEditMatchModal(match);
         }
       });
     });
+
   };
 
   const loadMatches = async () => {
@@ -455,10 +545,29 @@
 
     const phases = await window.BolaoApi.matchPhases();
     phaseOptions = Array.isArray(phases) ? phases : phases.items || [];
+  };
+
+  const getEditPhaseOptions = () => {
+    const phasesByValue = new Map();
+    [...PHASES, ...phaseOptions].forEach((phase) => {
+      phasesByValue.set(phase.value, phase);
+    });
+
+    return Array.from(phasesByValue.values()).sort((a, b) => {
+      return (a.round_order || 0) - (b.round_order || 0);
+    });
+  };
+
+  const currentFormPhaseOptions = () => (
+    nextMatchMode === "edit" ? getEditPhaseOptions() : phaseOptions
+  );
+
+  const renderNextMatchPhaseOptions = (selectedValue = "") => {
+    const options = currentFormPhaseOptions();
     nextMatchPhase.innerHTML = `
       <option value="">Selecione a fase</option>
-      ${phaseOptions.map((phase) => `
-        <option value="${escapeHtml(phase.value)}">${escapeHtml(phase.label)}</option>
+      ${options.map((phase) => `
+        <option value="${escapeHtml(phase.value)}"${phase.value === selectedValue ? " selected" : ""}>${escapeHtml(phase.label)}</option>
       `).join("")}
     `;
   };
@@ -530,8 +639,23 @@
     return `${nextMatchDate.value}T${nextMatchTime.value}:00-03:00`;
   };
 
+  const getMatchBrazilSide = (match) => (
+    String(match.home_team || "").trim().toLowerCase() === "brasil" ? "HOME" : "AWAY"
+  );
+
+  const getMatchOpponentName = (match) => (
+    getMatchBrazilSide(match) === "HOME" ? match.away_team : match.home_team
+  );
+
+  const findOpponentTeamForMatch = (match) => {
+    const opponentName = getMatchOpponentName(match);
+    return activeTeams.find((team) => normalizeSearchText(team.name).trim() === normalizeSearchText(opponentName).trim())
+      || getTeamByName(opponentName)
+      || null;
+  };
+
   const updateNextMatchPreview = () => {
-    const selectedPhase = phaseOptions.find((phase) => phase.value === nextMatchPhase.value);
+    const selectedPhase = currentFormPhaseOptions().find((phase) => phase.value === nextMatchPhase.value);
     const phaseLabel = selectedPhase?.label || "Fase nao selecionada";
     const opponent = selectedOpponentTeam?.name || "Adversario";
     const brazilSide = nextMatchBrazilSide.value || "HOME";
@@ -541,6 +665,25 @@
     const awayFallback = brazilSide === "AWAY" ? "Brasil" : opponent;
     const startsAt = buildStartsAt();
     const dateParts = startsAt ? formatDate(startsAt) : { date: "Data nao informada", time: "" };
+    const statusMarkup = nextMatchMode === "edit" && currentEditMatch
+      ? `
+        <span class="preview-match-status">Status: ${escapeHtml(formatStatus(currentEditMatch.status))}</span>
+        <span class="preview-match-actions">
+          ${isFinished(currentEditMatch) ? `
+            <button class="preview-match-action preview-reopen-button" type="button" data-preview-reopen-match>
+              <span class="material-symbols-outlined" aria-hidden="true">restart_alt</span>
+              <span>Reabrir</span>
+            </button>
+          ` : ""}
+          ${!isCancelled(currentEditMatch) ? `
+            <button class="preview-match-action preview-delete-button" type="button" data-preview-delete-match>
+              <span class="material-symbols-outlined" aria-hidden="true">delete</span>
+              <span>Excluir</span>
+            </button>
+          ` : ""}
+        </span>
+      `
+      : "";
 
     nextMatchPreview.innerHTML = `
       <strong>Proxima fase: ${escapeHtml(phaseLabel)}</strong>
@@ -550,11 +693,14 @@
         ${renderTeamBadge(awayTeam, awayFallback)}
       </span>
       <span>Data: ${escapeHtml(dateParts.date)}${dateParts.time ? ` as ${escapeHtml(dateParts.time)}` : ""}</span>
+      ${statusMarkup}
     `;
     updateSelectedOpponentBox();
   };
 
   const openNextMatchModal = async () => {
+    nextMatchMode = "create";
+    currentEditMatch = null;
     setNextMatchFeedback("");
     try {
       await Promise.all([loadPhases(), loadTeams()]);
@@ -562,10 +708,14 @@
       setNextMatchFeedback(error.message || "Nao foi possivel carregar os dados da partida.", "error");
     }
 
+    nextMatchModalTitle.textContent = "Criar proxima partida do Brasil";
+    nextMatchSubmitButton.textContent = "Criar partida";
+    setNextMatchFormEditable(true);
     selectedOpponentTeam = null;
     if (teamFilterInput) {
       teamFilterInput.value = "";
     }
+    renderNextMatchPhaseOptions();
     renderTeamOptions();
     updateNextMatchPreview();
     nextMatchModal.showModal();
@@ -573,9 +723,47 @@
     teamFilterInput?.focus();
   };
 
+  const setNextMatchFormEditable = (isEditable) => {
+    [nextMatchPhase, nextMatchBrazilSide, nextMatchDate, nextMatchTime, selectedOpponentBox, teamFilterInput].forEach((element) => {
+      element.disabled = !isEditable;
+    });
+    nextMatchSubmitButton.hidden = !isEditable;
+  };
+
+  const openEditMatchModal = async (match) => {
+    nextMatchMode = "edit";
+    currentEditMatch = match;
+    setNextMatchFeedback("");
+    try {
+      await Promise.all([loadPhases(), loadTeams()]);
+    } catch (error) {
+      setNextMatchFeedback(error.message || "Nao foi possivel carregar os dados da partida.", "error");
+    }
+
+    nextMatchModalTitle.textContent = "Editar partida";
+    nextMatchSubmitButton.textContent = "Salvar alteracoes";
+    setNextMatchFormEditable(isScheduled(match));
+    selectedOpponentTeam = findOpponentTeamForMatch(match);
+    if (teamFilterInput) {
+      teamFilterInput.value = "";
+    }
+    renderNextMatchPhaseOptions(match.phase || "");
+    nextMatchBrazilSide.value = getMatchBrazilSide(match);
+    const dateParts = formatInputDateTime(match.starts_at || match.match_date);
+    nextMatchDate.value = dateParts.date;
+    nextMatchTime.value = dateParts.time;
+    renderTeamOptions();
+    updateSelectedOpponentBox();
+    updateNextMatchPreview();
+    nextMatchModal.showModal();
+  };
+
   const closeNextMatchModal = () => {
     nextMatchModal.close();
     nextMatchForm.reset();
+    nextMatchMode = "create";
+    currentEditMatch = null;
+    setNextMatchFormEditable(true);
     selectedOpponentTeam = null;
     if (teamFilterInput) {
       teamFilterInput.value = "";
@@ -676,16 +864,45 @@
       return;
     }
 
-    setNextMatchFeedback("Criando partida...");
+    setNextMatchFeedback(nextMatchMode === "edit" ? "Salvando alteracoes..." : "Criando partida...");
 
     try {
-      const data = await window.BolaoApi.createNextBrazilMatch(payload);
-      closeNextMatchModal();
-      selectedPhase = payload.phase;
-      setPageFeedback(data.message || "Proxima partida do Brasil criada com sucesso.", "success");
+      if (nextMatchMode === "edit" && currentEditMatch) {
+        const data = await window.BolaoApi.updateMatch(currentEditMatch.id, payload);
+        closeNextMatchModal();
+        selectedPhase = payload.phase;
+        setPageFeedback(data.message || "Partida atualizada com sucesso.", "success");
+      } else {
+        const data = await window.BolaoApi.createNextBrazilMatch(payload);
+        closeNextMatchModal();
+        selectedPhase = payload.phase;
+        setPageFeedback(data.message || "Proxima partida do Brasil criada com sucesso.", "success");
+      }
       await loadMatches();
     } catch (error) {
-      setNextMatchFeedback(mapNextMatchError(error.message || "Nao foi possivel criar a partida."), "error");
+      const fallback = nextMatchMode === "edit"
+        ? "Nao foi possivel salvar as alteracoes."
+        : "Nao foi possivel criar a partida.";
+      setNextMatchFeedback(mapNextMatchError(error.message || fallback), "error");
+    }
+  });
+
+  deleteMatchForm?.addEventListener("submit", async (event) => {
+    event.preventDefault();
+
+    if (!currentDeleteMatch) {
+      return;
+    }
+
+    setDeleteMatchFeedback("Excluindo partida...");
+
+    try {
+      const data = await window.BolaoApi.deleteMatch(currentDeleteMatch.id);
+      closeDeleteMatchModal();
+      setPageFeedback(data.message || "Partida excluida com sucesso.", "success");
+      await loadMatches();
+    } catch (error) {
+      setDeleteMatchFeedback(error.message || "Nao foi possivel excluir a partida.", "error");
     }
   });
 
@@ -703,6 +920,8 @@
 
   nextMatchModal?.addEventListener("cancel", () => {
     nextMatchForm.reset();
+    nextMatchMode = "create";
+    currentEditMatch = null;
     selectedOpponentTeam = null;
     if (teamFilterInput) {
       teamFilterInput.value = "";
@@ -711,6 +930,12 @@
     renderTeamOptions();
     setNextMatchFeedback("");
     updateNextMatchPreview();
+  });
+
+  deleteMatchModal?.addEventListener("cancel", () => {
+    currentDeleteMatch = null;
+    deleteMatchForm.reset();
+    setDeleteMatchFeedback("");
   });
 
   document.querySelectorAll("[data-close-result]").forEach((button) => {
@@ -723,6 +948,10 @@
 
   document.querySelectorAll("[data-close-next-match]").forEach((button) => {
     button.addEventListener("click", closeNextMatchModal);
+  });
+
+  document.querySelectorAll("[data-close-delete-match]").forEach((button) => {
+    button.addEventListener("click", closeDeleteMatchModal);
   });
 
   createMatchButton?.addEventListener("click", openNextMatchModal);
@@ -784,6 +1013,19 @@
   [nextMatchPhase, nextMatchBrazilSide, nextMatchDate, nextMatchTime].forEach((element) => {
     element?.addEventListener("input", updateNextMatchPreview);
     element?.addEventListener("change", updateNextMatchPreview);
+  });
+
+  nextMatchPreview?.addEventListener("click", (event) => {
+    const reopenButton = event.target.closest("[data-preview-reopen-match]");
+    if (reopenButton) {
+      reopenFromEditPreview();
+      return;
+    }
+
+    const deleteButton = event.target.closest("[data-preview-delete-match]");
+    if (deleteButton) {
+      deleteFromEditPreview();
+    }
   });
 
   loadMatches();

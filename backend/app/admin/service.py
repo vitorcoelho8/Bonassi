@@ -103,6 +103,51 @@ class AdminService:
         db.session.commit()
         return match
 
+    def update_match(self, match_id: str, data: dict) -> Match:
+        match = db.session.get(Match, match_id)
+        if match is None:
+            raise ValueError("Partida nao encontrada.")
+
+        status = str(match.status or "").upper()
+        if status == "FINISHED":
+            raise ValueError("Nao e possivel editar uma partida finalizada. Reabra a partida ou edite apenas o resultado.")
+
+        if status != "SCHEDULED":
+            raise ValueError("Apenas partidas agendadas podem ser editadas.")
+
+        phase = self._parse_match_phase(data)
+        opponent_team = self._parse_opponent_team(data)
+        brazil_side = self._parse_brazil_side(data)
+        starts_at = self._parse_starts_at(data)
+
+        match.home_team = "Brasil" if brazil_side == "HOME" else opponent_team
+        match.away_team = opponent_team if brazil_side == "HOME" else "Brasil"
+        match.starts_at = starts_at
+        match.phase = phase
+        match.round_order = phase_round_order(phase)
+        match.is_brazil_match = True
+        match.is_knockout = is_knockout_phase(phase)
+
+        db.session.commit()
+        return match
+
+    def delete_match(self, match_id: str) -> tuple[Match | None, bool]:
+        match = db.session.get(Match, match_id)
+        if match is None:
+            raise ValueError("Partida nao encontrada.")
+
+        has_predictions = Prediction.query.filter_by(match_id=match.id).first() is not None
+        has_result = match.home_score is not None or match.away_score is not None
+
+        if not has_predictions and not has_result:
+            db.session.delete(match)
+            db.session.commit()
+            return None, True
+
+        match.status = "CANCELLED"
+        db.session.commit()
+        return match, False
+
     def save_match_result(self, match_id: str, data: dict) -> tuple[Match, int]:
         match = db.session.get(Match, match_id)
         if match is None:
@@ -168,11 +213,17 @@ class AdminService:
         if not data.get("phase"):
             raise ValueError("phase e obrigatorio.")
 
-        phase = normalize_phase(data.get("phase"))
+        phase = self._parse_match_phase(data)
         if phase not in ADMIN_NEXT_MATCH_PHASES:
             raise ValueError("Fase da partida invalida.")
 
         return phase
+
+    def _parse_match_phase(self, data: dict) -> str:
+        if not data.get("phase"):
+            raise ValueError("phase e obrigatorio.")
+
+        return normalize_phase(data.get("phase"))
 
     def _parse_opponent_team(self, data: dict) -> str:
         opponent_team_id = data.get("opponent_team_id")

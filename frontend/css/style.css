@@ -990,6 +990,11 @@ a {
   box-shadow: 0 8px 24px rgba(24, 28, 29, 0.08);
 }
 
+.match-card.match-cancelled {
+  opacity: 0.72;
+  background: var(--surface-soft);
+}
+
 .match-card-top,
 .match-card-header {
   display: flex;
@@ -1057,10 +1062,6 @@ a {
 .match-date .material-symbols-outlined {
   color: var(--secondary);
   font-size: 1.15rem;
-}
-
-.match-card-date > span:not(.material-symbols-outlined):not(.match-date-text) {
-  display: none;
 }
 
 .match-card-main,
@@ -1165,17 +1166,9 @@ a {
   font-size: 0.84rem;
 }
 
-.reopen-match-button {
-  border-color: rgba(186, 26, 26, 0.18);
-  color: #7d1717;
-  background: #fde8e8;
-}
-
-.reopen-match-button:hover,
-.reopen-match-button:focus {
-  border-color: rgba(186, 26, 26, 0.34);
-  background: #fbd7d7;
-  box-shadow: 0 0 0 3px rgba(186, 26, 26, 0.1);
+.match-edit-button {
+  color: var(--primary);
+  background: #f4edf8;
 }
 
 .result-modal {
@@ -1279,6 +1272,43 @@ a {
   border: 1px solid var(--surface-variant);
   border-radius: 10px;
   background: var(--surface-soft);
+}
+
+.preview-match-status {
+  color: var(--text-muted);
+  font-weight: 800;
+}
+
+.preview-match-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.preview-match-action {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  border: 1px solid var(--surface-variant);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--primary);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.preview-match-action .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+.preview-delete-button {
+  border-color: rgba(186, 26, 26, 0.18);
+  color: #7d1717;
+  background: #fde8e8;
 }
 
 .team-picker {

@@ -44,6 +44,47 @@ def create_next_brazil_match():
     ), 201
 
 
+@admin_bp.put("/matches/<match_id>")
+@admin_required
+def update_match(match_id: str):
+    try:
+        match = AdminService().update_match(match_id, request.get_json(silent=True) or {})
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 400
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify({"error": "Banco de dados indisponivel."}), 503
+
+    return jsonify(
+        {
+            "message": "Partida atualizada com sucesso.",
+            "match": MatchSchema().dump(match),
+        }
+    )
+
+
+@admin_bp.delete("/matches/<match_id>")
+@admin_required
+def delete_match(match_id: str):
+    try:
+        match, was_deleted = AdminService().delete_match(match_id)
+    except ValueError as error:
+        return jsonify({"error": str(error)}), 404
+    except SQLAlchemyError:
+        db.session.rollback()
+        return jsonify({"error": "Banco de dados indisponivel."}), 503
+
+    if was_deleted:
+        return jsonify({"message": "Partida excluida com sucesso."})
+
+    return jsonify(
+        {
+            "message": "Partida cancelada com sucesso. Os registros historicos foram preservados.",
+            "match": MatchSchema().dump(match),
+        }
+    )
+
+
 @admin_bp.put("/matches/<match_id>/result")
 @admin_required
 def save_match_result(match_id: str):

@@ -149,7 +149,32 @@
 
         <div class="result-actions">
           <button class="secondary-button" type="button" data-close-next-match>Cancelar</button>
-          <button class="primary-button" type="submit">Criar partida</button>
+          <button id="next-match-submit-button" class="primary-button" type="submit">Criar partida</button>
+        </div>
+      </form>
+    </dialog>
+
+    <dialog id="delete-match-modal" class="result-modal delete-match-modal" aria-labelledby="delete-match-modal-title">
+      <form id="delete-match-form" class="result-form" method="dialog">
+        <div class="result-modal-header">
+          <h2 id="delete-match-modal-title">Excluir partida</h2>
+          <button class="icon-action" type="button" data-close-delete-match aria-label="Fechar">
+            <span class="material-symbols-outlined" aria-hidden="true">close</span>
+          </button>
+        </div>
+
+        <section class="reopen-warning">
+          <strong id="delete-match-title">Partida selecionada</strong>
+          <p>Voc&ecirc; est&aacute; prestes a excluir esta partida.</p>
+          <p>Se a partida ainda n&atilde;o tiver palpites ou resultado, ela ser&aacute; removida. Se j&aacute; houver palpites ou resultado, a partida ser&aacute; apenas cancelada para preservar o hist&oacute;rico do bol&atilde;o.</p>
+          <p>Deseja continuar?</p>
+        </section>
+
+        <p id="delete-match-feedback" class="form-feedback" aria-live="polite"></p>
+
+        <div class="result-actions">
+          <button class="secondary-button" type="button" data-close-delete-match>Cancelar</button>
+          <button class="danger-button" type="submit">Confirmar exclus&atilde;o</button>
         </div>
       </form>
     </dialog>
