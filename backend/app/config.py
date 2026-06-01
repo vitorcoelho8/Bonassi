@@ -50,6 +50,7 @@ def _database_url() -> str:
 
 
 class Config:
+    IS_PRODUCTION = _is_production()
     SECRET_KEY = _secret_key()
     SQLALCHEMY_DATABASE_URI = _database_url()
     SQLALCHEMY_TRACK_MODIFICATIONS = False
@@ -59,7 +60,7 @@ class Config:
 
     SESSION_COOKIE_HTTPONLY = True
     SESSION_COOKIE_SAMESITE = "Lax"
-    SESSION_COOKIE_SECURE = _is_production()
+    SESSION_COOKIE_SECURE = IS_PRODUCTION
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
 
     AUTH_TOKEN_SALT = getenv("AUTH_TOKEN_SALT", "bonassi-auth-token")

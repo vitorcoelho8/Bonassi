@@ -16,7 +16,20 @@ from app.teams.models import Team
 
 DEFAULT_ADMIN_EMAIL = "admin@bonassi.com"
 DEFAULT_ADMIN_NAME = "Administrador"
-DEFAULT_ADMIN_PASSWORD = "123456a!"
+LOCAL_DEFAULT_ADMIN_PASSWORD = "123456a!"
+WEAK_ADMIN_PASSWORDS = {
+    "",
+    "123456",
+    "12345678",
+    "123456789",
+    "123456a!",
+    "admin",
+    "admin123",
+    "password",
+    "password123",
+    "change-me",
+    "change-this-password",
+}
 ADMIN_NEXT_MATCH_PHASES = (
     "ROUND_OF_32",
     "ROUND_OF_16",
@@ -27,17 +40,33 @@ ADMIN_NEXT_MATCH_PHASES = (
 )
 
 
+def _is_production_environment() -> bool:
+    return bool(current_app.config.get("IS_PRODUCTION", False))
+
+
+def _admin_password() -> str:
+    configured_password = str(current_app.config.get("ADMIN_PASSWORD") or "").strip()
+    is_production = _is_production_environment()
+
+    if not configured_password:
+        if is_production:
+            raise RuntimeError("ADMIN_PASSWORD must be configured in production.")
+
+        return LOCAL_DEFAULT_ADMIN_PASSWORD
+
+    if is_production and configured_password.lower() in WEAK_ADMIN_PASSWORDS:
+        raise RuntimeError("ADMIN_PASSWORD is too weak for production.")
+
+    return configured_password
+
+
 def ensure_default_admin() -> None:
     admin_email = current_app.config.get("ADMIN_EMAIL") or DEFAULT_ADMIN_EMAIL
     admin_name = current_app.config.get("ADMIN_NAME") or DEFAULT_ADMIN_NAME
-    configured_password = current_app.config.get("ADMIN_PASSWORD")
-    is_production = current_app.config.get("SESSION_COOKIE_SECURE", False)
-
-    if is_production and not configured_password:
-        raise RuntimeError("ADMIN_PASSWORD must be configured before creating the initial admin.")
+    has_configured_password = bool(str(current_app.config.get("ADMIN_PASSWORD") or "").strip())
+    password = _admin_password()
 
     admin = Participant.query.filter_by(email=admin_email).first()
-    password = configured_password or DEFAULT_ADMIN_PASSWORD
 
     if admin is None:
         admin = Participant(
@@ -50,7 +79,7 @@ def ensure_default_admin() -> None:
         db.session.add(admin)
     else:
         admin.name = admin_name
-        if configured_password or not admin.password_hash:
+        if has_configured_password or not admin.password_hash:
             admin.password_hash = generate_password_hash(password)
         admin.role = "admin"
         admin.is_active = True
