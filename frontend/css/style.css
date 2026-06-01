@@ -700,6 +700,10 @@ a {
   grid-template-columns: 1fr;
 }
 
+.prediction-actions > button {
+  width: 100%;
+}
+
 .match-summary {
   display: grid;
   gap: 4px;

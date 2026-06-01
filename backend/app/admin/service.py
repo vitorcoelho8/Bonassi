@@ -1,3 +1,4 @@
+from flask import current_app
 from werkzeug.security import generate_password_hash
 
 from app.database import db
@@ -14,21 +15,30 @@ DEFAULT_ADMIN_PASSWORD = "123456a!"
 
 
 def ensure_default_admin() -> None:
-    admin = Participant.query.filter_by(email=DEFAULT_ADMIN_EMAIL).first()
-    password_hash = generate_password_hash(DEFAULT_ADMIN_PASSWORD)
+    admin_email = current_app.config.get("ADMIN_EMAIL") or DEFAULT_ADMIN_EMAIL
+    admin_name = current_app.config.get("ADMIN_NAME") or DEFAULT_ADMIN_NAME
+    configured_password = current_app.config.get("ADMIN_PASSWORD")
+    is_production = current_app.config.get("SESSION_COOKIE_SECURE", False)
+
+    if is_production and not configured_password:
+        raise RuntimeError("ADMIN_PASSWORD must be configured before creating the initial admin.")
+
+    admin = Participant.query.filter_by(email=admin_email).first()
+    password = configured_password or DEFAULT_ADMIN_PASSWORD
 
     if admin is None:
         admin = Participant(
-            name=DEFAULT_ADMIN_NAME,
-            email=DEFAULT_ADMIN_EMAIL,
-            password_hash=password_hash,
+            name=admin_name,
+            email=admin_email,
+            password_hash=generate_password_hash(password),
             role="admin",
             is_active=True,
         )
         db.session.add(admin)
     else:
-        admin.name = DEFAULT_ADMIN_NAME
-        admin.password_hash = password_hash
+        admin.name = admin_name
+        if configured_password or not admin.password_hash:
+            admin.password_hash = generate_password_hash(password)
         admin.role = "admin"
         admin.is_active = True
 

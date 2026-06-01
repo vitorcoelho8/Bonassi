@@ -31,26 +31,22 @@
         <fieldset class="field bonus-checklist">
           <legend>Tipo de bonus</legend>
           <label class="check-option">
-            <input type="radio" name="bonus_type" value="FOLLOW_BONASSI" required>
+            <input type="checkbox" name="bonus_type" value="FOLLOW_BONASSI">
             <span>Seguir a Bonassi: +4 pontos</span>
           </label>
           <label class="check-option">
-            <input type="radio" name="bonus_type" value="STORY_MENTION">
+            <input type="checkbox" name="bonus_type" value="STORY_MENTION">
             <span>Story marcando a clinica: +4 pontos</span>
           </label>
           <label class="check-option">
-            <input type="radio" name="bonus_type" value="INSTAGRAM_REVIEW">
+            <input type="checkbox" name="bonus_type" value="INSTAGRAM_REVIEW">
             <span>Avaliar/interagir com a Bonassi no Instagram: +2 pontos</span>
           </label>
           <label class="check-option">
-            <input type="radio" name="bonus_type" value="REFERRAL">
+            <input type="checkbox" name="bonus_type" value="REFERRAL">
             <span>Indicar alguem: +6 pontos</span>
           </label>
         </fieldset>
-        <label class="field">
-          <span>Observacao/evidencia</span>
-          <textarea name="evidence_text" rows="3" required></textarea>
-        </label>
         <div id="referral-fields" class="split-fields hidden">
           <label class="field">
             <span>Nome do indicado</span>
@@ -83,9 +79,6 @@
         </div>
         <p id="admin-bonus-feedback" class="form-feedback" role="status" aria-live="polite"></p>
         <div id="admin-bonus-list" class="bonus-list"></div>
-      </section>
-      <section class="screen-actions">
-        <button id="finish-button" class="secondary-button" type="button">Finalizar atendimento</button>
       </section>
     </main>
 

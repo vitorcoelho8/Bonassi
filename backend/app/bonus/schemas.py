@@ -2,7 +2,7 @@ from app.bonus.service import BONUS_DESCRIPTIONS
 
 
 class BonusAnswerSchema:
-    required_fields = ("participant_id", "bonus_type", "evidence_text")
+    required_fields = ("participant_id", "bonus_type")
     allowed_bonus_types = {
         "FOLLOW_BONASSI",
         "STORY_MENTION",
@@ -16,14 +16,17 @@ class BonusAnswerSchema:
             raise ValueError(f"Missing required fields: {', '.join(missing)}")
 
         participant_id = str(data["participant_id"]).strip()
-        evidence_text = str(data["evidence_text"]).strip()
-        if not participant_id or not evidence_text:
-            raise ValueError("participant_id e evidence_text sao obrigatorios.")
+        if not participant_id:
+            raise ValueError("participant_id e obrigatorio.")
 
         bonus_type = str(data["bonus_type"]).strip().upper()
         if bonus_type not in self.allowed_bonus_types:
             raise ValueError("Tipo de bonus invalido.")
 
+        evidence_text = self._optional_text(data.get("evidence_text")) or BONUS_DESCRIPTIONS.get(
+            bonus_type,
+            bonus_type,
+        )
         referral_name = self._optional_text(data.get("referral_name"))
         referral_phone = self._optional_phone(data.get("referral_phone"))
 
@@ -58,7 +61,8 @@ class BonusAnswerSchema:
         if value in (None, ""):
             return None
 
-        return str(value).strip()
+        text = str(value).strip()
+        return text or None
 
     def _optional_phone(self, value) -> str | None:
         if value in (None, ""):

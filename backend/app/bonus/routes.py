@@ -4,12 +4,14 @@ from sqlalchemy.exc import SQLAlchemyError
 from app.bonus.schemas import BonusAnswerSchema
 from app.bonus.service import BonusService
 from app.database import db
+from app.participants.routes import admin_required
 
 bonus_bp = Blueprint("bonus", __name__)
 
 
 @bonus_bp.get("")
 @bonus_bp.get("/")
+@admin_required
 def list_bonus_answers():
     participant_id = request.args.get("participant_id") or getattr(g, "current_user", None)
     if hasattr(participant_id, "id"):
@@ -23,6 +25,7 @@ def list_bonus_answers():
 
 
 @bonus_bp.get("/participant/<participant_id>")
+@admin_required
 def list_bonus_answers_by_participant(participant_id: str):
     answers = BonusService().list_by_participant(participant_id)
     return jsonify(BonusAnswerSchema().dump_many(answers))
@@ -30,6 +33,7 @@ def list_bonus_answers_by_participant(participant_id: str):
 
 @bonus_bp.post("")
 @bonus_bp.post("/")
+@admin_required
 def save_bonus_answer():
     try:
         payload = BonusAnswerSchema().load(request.get_json(silent=True) or {})

@@ -9,7 +9,6 @@
   const referralFields = document.querySelector("#referral-fields");
   const backProfileButton = document.querySelector("#back-profile-button");
   const bonusNavLink = document.querySelector("#bonus-nav-link");
-  const finishButton = document.querySelector("#finish-button");
   const participantBonusPanel = document.querySelector("#participant-bonus-panel");
   const participantBonusList = document.querySelector("#participant-bonus-list");
   const adminBonusPanel = document.querySelector("#admin-bonus-panel");
@@ -42,10 +41,12 @@
     }).format(new Date(value));
   };
 
-  const selectedBonusType = () => bonusTypes.find((input) => input.checked)?.value || "";
+  const selectedBonusTypes = () => bonusTypes
+    .filter((input) => input.checked)
+    .map((input) => input.value);
 
   const toggleReferralFields = () => {
-    const isReferral = selectedBonusType() === "REFERRAL";
+    const isReferral = selectedBonusTypes().includes("REFERRAL");
     referralFields.classList.toggle("hidden", !isReferral);
     referralFields.querySelectorAll("input").forEach((input) => {
       input.required = isReferral;
@@ -73,7 +74,7 @@
           <strong>${escapeHtml(item.description || item.bonus_type)} (${escapeHtml(item.points)} pts)</strong>
           <span>Status: ${escapeHtml(item.status)}</span>
         </div>
-        <p>${escapeHtml(item.evidence_text)}</p>
+        ${item.evidence_text ? `<p>${escapeHtml(item.evidence_text)}</p>` : ""}
         ${item.referral_name || item.referral_phone ? `
           <p>Indicado: ${escapeHtml(item.referral_name)} - ${escapeHtml(item.referral_phone)}</p>
         ` : ""}
@@ -138,10 +139,6 @@
     await loadParticipantBonus();
   };
 
-  finishButton.addEventListener("click", () => {
-    window.location.href = "admin.html";
-  });
-
   bonusTypes.forEach((input) => {
     input.addEventListener("change", toggleReferralFields);
   });
@@ -155,17 +152,24 @@
     }
 
     const formData = new FormData(form);
+    const bonusTypeValues = formData.getAll("bonus_type");
+    if (!bonusTypeValues.length) {
+      setFeedback(feedback, "Selecione ao menos um tipo de bonus.", "error");
+      return;
+    }
+
     setFeedback(feedback, "Enviando solicitacao...", "");
 
     try {
-      await window.BolaoApi.saveBonus({
-        participant_id: participant.id,
-        bonus_type: formData.get("bonus_type"),
-        evidence_text: formData.get("evidence_text"),
-        referral_name: formData.get("referral_name") || null,
-        referral_phone: formData.get("referral_phone") || null,
-      });
-      setFeedback(feedback, "Solicitacao enviada para aprovacao do admin.", "success");
+      await Promise.all(bonusTypeValues.map((bonusType) => (
+        window.BolaoApi.saveBonus({
+          participant_id: participant.id,
+          bonus_type: bonusType,
+          referral_name: bonusType === "REFERRAL" ? formData.get("referral_name") || null : null,
+          referral_phone: bonusType === "REFERRAL" ? formData.get("referral_phone") || null : null,
+        })
+      )));
+      setFeedback(feedback, "Solicitacoes enviadas para aprovacao do admin.", "success");
       form.reset();
       toggleReferralFields();
       await loadParticipantBonus();

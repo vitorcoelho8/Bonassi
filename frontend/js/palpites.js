@@ -10,7 +10,6 @@
   const matchIdInput = document.querySelector("#match-id");
   const bonusButton = document.querySelector("#bonus-button");
   const bonusNavLink = document.querySelector("#bonus-nav-link");
-  const finishButton = document.querySelector("#finish-button");
 
   let participant = null;
   let match = null;
@@ -58,10 +57,6 @@
   if (bonusNavLink) {
     bonusNavLink.href = `bonus.html?participant_id=${encodeURIComponent(participantId)}`;
   }
-
-  finishButton.addEventListener("click", () => {
-    window.location.href = "usuarios.html";
-  });
 
   predictionForm?.addEventListener("submit", async (event) => {
     event.preventDefault();

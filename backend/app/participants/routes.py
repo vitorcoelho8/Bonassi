@@ -1,14 +1,35 @@
 from functools import wraps
 from typing import Any, Callable
 
-from flask import Blueprint, g, jsonify, request, session
+from flask import Blueprint, current_app, g, jsonify, request, session
 from sqlalchemy.exc import SQLAlchemyError
+from itsdangerous import BadSignature, SignatureExpired, URLSafeTimedSerializer
 
 from app.database import db
 from app.participants.schemas import LoginSchema, ParticipantSchema
 from app.participants.service import ParticipantService
 
 participants_bp = Blueprint("participants", __name__)
+
+
+def generate_access_token(user_id: str) -> str:
+    serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
+    return serializer.dumps({"user_id": user_id}, salt=current_app.config["AUTH_TOKEN_SALT"])
+
+
+def verify_access_token(token: str) -> str | None:
+    serializer = URLSafeTimedSerializer(current_app.config["SECRET_KEY"])
+    try:
+        payload = serializer.loads(
+            token,
+            salt=current_app.config["AUTH_TOKEN_SALT"],
+            max_age=current_app.config["AUTH_TOKEN_MAX_AGE_SECONDS"],
+        )
+    except (BadSignature, SignatureExpired):
+        return None
+
+    user_id = payload.get("user_id") if isinstance(payload, dict) else None
+    return str(user_id) if user_id else None
 
 
 def get_bearer_token() -> str | None:
@@ -24,7 +45,8 @@ def get_bearer_token() -> str | None:
 def login_required(view: Callable[..., Any]) -> Callable[..., Any]:
     @wraps(view)
     def wrapper(*args: Any, **kwargs: Any):
-        user_id = get_bearer_token() or session.get("user_id")
+        bearer_token = get_bearer_token()
+        user_id = verify_access_token(bearer_token) if bearer_token else session.get("user_id")
 
         if not user_id:
             return jsonify({"error": "Authentication token is required."}), 401
@@ -35,7 +57,7 @@ def login_required(view: Callable[..., Any]) -> Callable[..., Any]:
             return jsonify({"error": "Invalid authentication token."}), 401
 
         g.current_user = participant
-        g.access_token = participant.id
+        g.access_token = bearer_token
         return view(*args, **kwargs)
 
     return wrapper
@@ -55,12 +77,14 @@ def admin_required(view: Callable[..., Any]) -> Callable[..., Any]:
 
 @participants_bp.get("")
 @participants_bp.get("/")
+@admin_required
 def list_participants():
     participants = ParticipantService().list_active()
     return jsonify({"items": ParticipantSchema().dump_many(participants)})
 
 
 @participants_bp.get("/search")
+@admin_required
 def search_participants():
     term = request.args.get("term", "")
     participants = ParticipantService().search(term)
@@ -68,6 +92,7 @@ def search_participants():
 
 
 @participants_bp.get("/<participant_id>")
+@admin_required
 def get_participant(participant_id: str):
     participant = ParticipantService().get_by_id(participant_id)
 
@@ -79,6 +104,7 @@ def get_participant(participant_id: str):
 
 @participants_bp.post("")
 @participants_bp.post("/")
+@admin_required
 def create_participant():
     try:
         payload = ParticipantSchema().load(request.get_json(silent=True) or {})
@@ -93,6 +119,7 @@ def create_participant():
 
 
 @participants_bp.post("/register")
+@admin_required
 def register():
     try:
         payload = ParticipantSchema().load(request.get_json(silent=True) or {})
@@ -118,26 +145,17 @@ def login():
         return jsonify({"error": "Banco de dados indisponivel."}), 503
 
     session.clear()
+    session.permanent = True
     session["user_id"] = participant.id
     session["user_email"] = participant.email
 
-    return jsonify({"user": participant.to_dict(), "access_token": participant.id})
+    return jsonify({"user": participant.to_dict(), "access_token": generate_access_token(participant.id)})
 
 
 @participants_bp.get("/me")
+@login_required
 def me():
-    user_id = session.get("user_id")
-
-    if not user_id:
-        return jsonify({"authenticated": False}), 401
-
-    participant = ParticipantService().get_by_id(user_id)
-
-    if not participant or not participant.is_active:
-        session.clear()
-        return jsonify({"authenticated": False}), 401
-
-    return jsonify({"authenticated": True, "user": participant.to_dict()})
+    return jsonify({"authenticated": True, "user": g.current_user.to_dict()})
 
 
 @participants_bp.post("/logout")

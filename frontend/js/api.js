@@ -1,5 +1,13 @@
 (function () {
   const getToken = () => localStorage.getItem("access_token") || "";
+  const clearAuth = () => {
+    localStorage.removeItem("access_token");
+    localStorage.removeItem("user");
+  };
+  const isLoginPage = () => {
+    const page = window.location.pathname.split("/").pop() || "index.html";
+    return page === "index.html" || page === "login";
+  };
 
   const request = async (path, options = {}) => {
     const headers = {
@@ -20,6 +28,13 @@
     const data = body ? JSON.parse(body) : {};
 
     if (!response.ok) {
+      if (response.status === 401) {
+        clearAuth();
+        if (!isLoginPage()) {
+          window.location.href = "/login";
+        }
+      }
+
       throw new Error(data.error || `Erro ${response.status}`);
     }
 
@@ -72,5 +87,6 @@
       body: JSON.stringify(payload),
     }),
     adminParticipants: () => request("/api/participants"),
+    me: () => request("/api/participants/me"),
   };
 })();

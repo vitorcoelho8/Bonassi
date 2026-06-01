@@ -2,6 +2,7 @@ from flask import Blueprint, g, jsonify, request
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.database import db
+from app.participants.routes import admin_required
 from app.predictions.schemas import PredictionSchema
 from app.predictions.service import PredictionService
 
@@ -10,6 +11,7 @@ predictions_bp = Blueprint("predictions", __name__)
 
 @predictions_bp.get("")
 @predictions_bp.get("/")
+@admin_required
 def list_predictions():
     participant_id = request.args.get("participant_id") or getattr(g, "current_user", None)
     if hasattr(participant_id, "id"):
@@ -23,6 +25,7 @@ def list_predictions():
 
 
 @predictions_bp.get("/participant/<participant_id>")
+@admin_required
 def list_predictions_by_participant(participant_id: str):
     predictions = PredictionService().list_by_participant(participant_id)
     return jsonify({"items": PredictionSchema().dump_many(predictions)})
@@ -30,6 +33,7 @@ def list_predictions_by_participant(participant_id: str):
 
 @predictions_bp.post("")
 @predictions_bp.post("/")
+@admin_required
 def save_prediction():
     try:
         payload = PredictionSchema().load(request.get_json(silent=True) or {})
@@ -44,6 +48,7 @@ def save_prediction():
 
 
 @predictions_bp.put("/<prediction_id>")
+@admin_required
 def update_prediction(prediction_id: str):
     try:
         payload = PredictionSchema().load(request.get_json(silent=True) or {})
